@@ -18,7 +18,7 @@ all: $(MAIN) $(OBJECTS)
 	g++ $(CFLAGS) -c -o $@ $^
 
 $(MAIN): $(OBJECTS)
-	$(CC) -o $(MAIN) $(OBJECTS)
+	$(CC) -o $(MAIN) $(OBJECTS) libclap/clap.o
 
 clean:
 	rm -f $(MAIN) $(OBJECTS)
