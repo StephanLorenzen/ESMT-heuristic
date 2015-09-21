@@ -23,33 +23,40 @@ public:
   /**
    * Destructor
    */
-  ~BottleneckGraph();
+  virtual ~BottleneckGraph();
   
   /**
    * Gets the Bottleneck distance between points indexed by i and j
    */
-  float distance(const unsigned int i, const unsigned int j);
-  
-  /**
-   * Merges all of the points in the given vector, and updates the Bottleneck Graph
-   */
-  void mergePoints(const std::vector<Point> &points);
+  double distance(const unsigned int i, const unsigned int j);
   
 protected:
-private:
   /**
-   * Merges the two points indexed by i and j, and updates the Bottleneck Graph
+   * Recomputes all bottleneck distances.
    */
-  unsigned int _mergePoints(const unsigned int i, const unsigned int j);
+  void _recompute();
   
+  /**
+   * Recomputes the bottleneck distances for all given points (indices).
+   */
+  void _recompute(std::vector<unsigned int> &points);
+
+  /**
+   * Initial traverse of the tree to find the Bottleneck distance for a single point.
+   */
+  void _traverse(const unsigned int p, const unsigned int cur,
+		 const unsigned int prevEdge, const unsigned int mEdge);
+
   struct _edge {
-    float dist;
+    double dist;
     unsigned int p, q;
   };
 
   std::vector<Point> points;
+  unsigned int** bdist;
   std::vector< std::vector<unsigned int> > connections;
   std::vector<_edge> edges;
+private:
 };
 
 #endif /* BOTTLENECK_GRAPH_H */
