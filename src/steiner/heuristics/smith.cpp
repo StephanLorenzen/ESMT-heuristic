@@ -27,37 +27,37 @@ IterativeSmith::~IterativeSmith() {}
 /**
  * Finds the steiner points and edges.
  */
-SteinerTree *IterativeSmith::findSteinerPoints(Graph &subgraph) {
-  unsigned int i;
+void IterativeSmith::findSteinerPoints(SteinerTree &subgraph) {
+  unsigned int i, n;
   // Create result
   std::vector<Edge> edgelist;
-  SteinerTree *result = new SteinerTree(*subgraph.getPointsPtr(),
-					edgelist);
+  
   // Get pointers to result lists
-  std::vector<Point> *points = result->getPointsPtr();
-  std::vector<Edge>  *edges  = result->getEdgesPtr();
+  n = subgraph.n();
+  std::vector<Edge> &edges = subgraph.getEdges();
 
   this->dim = subgraph.dimension();
   assert(this->dim < this->max_dim);
   
   // Check that the input is valid
-  assert(points->size() > 2);
-  assert(points->size() < NMAX);
+  assert(n > 2);
+  assert(n < NMAX);
 
   // Generate the MST as an upper bound
   double mst_length = subgraph.getMSTLength();
   
   assert(mst_length > 0.0);
 
-  this->N = points->size();
+  this->N = n;
 
   // Topology vector
   int topo_vec[NMAX];
   
-  // Copy points
-  this->P = subgraph.getPoints();
-  // Add SP-dummies
+  // Copy points and add SP-dummies
+  this->P = std::vector<Point>();
   this->P.reserve(2*this->N-2);
+  for(i = 0; i < n; i++)
+    this->P.push_back(subgraph.getPoint(i));
   for(i = 0; i < this->N-2; i++)
     this->P.push_back(Point(this->dim));
   
@@ -146,13 +146,11 @@ SteinerTree *IterativeSmith::findSteinerPoints(Graph &subgraph) {
   }
   // The tree is done
 
-  this->cleanUp(points, edges, this->do_clean_up);
+  this->cleanUp(subgraph.getSteinerPoints(), edges, this->do_clean_up);
   
   // Compute ratio
-  result->setMSTLength(mst_length);
-  result->getSMTLength();
-  result->getSteinerRatio();
-  return result;
+  subgraph.setMSTLength(mst_length);
+  subgraph.setSMTLength(subgraph.getLength());
 }
 
 void IterativeSmith::buildTree(unsigned int l, int *topo_vec) {

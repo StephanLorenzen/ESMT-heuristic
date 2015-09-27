@@ -1,14 +1,14 @@
 CC=g++
 # Add -DNDEBUG and -O2 in CFLAGS before testing
-CFLAGS=-Wall -I./ -Wfatal-errors -O2 -DNDEBUG
+CFLAGS=-Wall -I./ -Wfatal-errors # -O2 -DNDEBUG
 
 MAIN=esmt-heuristic
 
 OBJECTS = $(subst cpp,o,$(wildcard *.cpp))
 OBJECTS+= $(subst cpp,o,$(wildcard steiner/*.cpp))
 OBJECTS+= $(subst cpp,o,$(wildcard steiner/*/*.cpp))
-OBJECTS+= $(subst cpp,o,$(wildcard steiner/*/*/*.cpp))
-OBJECTS+= $(subst cpp,o,$(wildcard test/*.cpp))
+#OBJECTS+= $(subst cpp,o,$(wildcard steiner/*/*/*.cpp))
+#OBJECTS+= $(subst cpp,o,$(wildcard test/*.cpp))
 
 CFLAGS+= -std=c++11
 

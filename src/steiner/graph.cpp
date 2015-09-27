@@ -1,26 +1,33 @@
 #include <vector>
 #include <iostream>
+#include <assert.h>
 
 #include <steiner/graph.hpp>
 #include <steiner/utils/utils.hpp>
 #include <steiner/utils/point.hpp>
 
-Graph::Graph() {
-  this->mst_length = -1;
-  this->points     = std::vector<Utils::Point>();
-  this->edges      = std::vector<Utils::Edge>();
+Graph::Graph(std::vector<Utils::Point> &pointsRef)
+  : pointsRef(&pointsRef)
+{
+  // Assume all points, fill pidxs
+  for(unsigned int i=0; i<pointsRef.size(); i++)
+    this->pidxs.push_back(i);
+  this->mst_length  = -1;
+  this->bmst_length = -1;
 }
 
-Graph::Graph(std::vector<Utils::Point> &points) {
-  this->points     = points;
-  this->edges      = std::vector<Utils::Edge>();
-  this->mst_length = -1;
+Graph::Graph(std::vector<Pidx> &points, std::vector<Utils::Point> &pointsRef)
+  : pointsRef(&pointsRef), pidxs(points)
+{
+  this->mst_length  = -1;
+  this->bmst_length = -1;
 }
 
-Graph::Graph(std::vector<Utils::Point> &points, std::vector<Utils::Edge> &edges) {
-  this->mst_length = -1;
-  this->points     = points;
-  this->edges      = edges;
+Graph::Graph(std::vector<Pidx> &points, std::vector<Utils::Point> &pointsRef,
+	     std::vector<Utils::Edge> &edges)
+  : pointsRef(&pointsRef), pidxs(points), edges(edges) {
+  this->mst_length  = -1;
+  this->bmst_length = -1;
 }
 
 Graph::~Graph() {}
@@ -28,57 +35,98 @@ Graph::~Graph() {}
 /*
  * Getter for the points
  */
-std::vector<Utils::Point> Graph::getPoints() {
-  return this->points;
+std::vector<Pidx> &Graph::getPoints() {
+  return this->pidxs;
+}
+std::vector<Utils::Point> &Graph::getPointsRef() {
+  return *this->pointsRef;
 }
 
 /*
  * Getter for the edges
  */
-std::vector<Utils::Edge> Graph::getEdges() {
+std::vector<Utils::Edge> &Graph::getEdges() {
   return this->edges;
 }
 
-/*
- * Getter for the terminals ptr
- */
-std::vector<Utils::Point> *Graph::getPointsPtr() {
-  return &this->points;
+Point &Graph::getPoint(unsigned int index) const {
+  assert(index < this->n());
+  return (*this->pointsRef)[this->pidx(index)];
 }
 
-/*
- * Getter for the edges ptr
- */
-std::vector<Utils::Edge> *Graph::getEdgesPtr() {
-  return &this->edges;
+Pidx Graph::pidx(unsigned int index) const {
+  return this->pidxs[index];
 }
-
-
-double Graph::getMSTLength() {
-  if(this->mst_length > 0)
+unsigned int Graph::n() const {
+  return this->pidxs.size();
+}
+double Graph::getMSTLength() const {
+  /*  if(this->mst_length > 0)
     return this->mst_length;
   
   Graph mst = Utils::MSTKruskal(*this);
   this->mst_length = mst.getLength();
-  
+  */
   return this->mst_length;
+}
+
+double Graph::getBMSTLength() const {
+  return this->bmst_length;
 }
 
 void Graph::setMSTLength(double l) {
   this->mst_length = l;
 }
+void Graph::setBMSTLength(double l) {
+  this->bmst_length = l;
+}
 
-double Graph::getLength() {
-  std::vector<Utils::Edge>::iterator it;
+void Graph::calculateMSTLength() {
+
+}
+void Graph::calculateBMSTLength() {
+
+}
+
+double Graph::getLength() const {
+  std::vector<Edge>::const_iterator it;
   double result = 0.0;
   for(it = this->edges.begin(); it != this->edges.end(); it++) {
-    result += Utils::length(this->points[it->i0], this->points[it->i1]);
+    result += Utils::length(this->getPoint(it->i0), this->getPoint(it->i1));
   }
   return result;
 }
 
-unsigned int Graph::dimension() {
-  if(this->points.size() < 1)
+unsigned int Graph::dimension() const {
+  if(this->pointsRef->size() < 1)
     return 0;
-  return this->points[0].dim();
+  return (*this->pointsRef)[0].dim();
+}
+
+
+Graph &Graph::operator=(const Graph &other) {
+  if(this != &other) {
+    this->pointsRef   = other.pointsRef;
+    this->pidxs       = other.pidxs;
+    this->edges       = other.edges;
+    this->mst_length  = other.mst_length;
+    this->bmst_length = other.bmst_length;
+  }
+  return *this;
+}
+
+std::ostream& operator<<(std::ostream& os, Graph &g) {
+  unsigned int i, n = g.n();
+  std::string indent("  ");
+  std::vector<Utils::Edge> &edges = g.getEdges();
+  os << "# Terminals" << std::endl;
+  for(i = 0; i < n; i++)
+    os << indent << i << " " << g.getPoint(i) << std::endl;
+  os << std::endl << "# Edges" << std::endl;
+  for(i = 0; i < edges.size(); i++) {
+    os << indent << "(" << edges[i].i0
+       << " " << edges[i].i1 << ")" << std::endl;
+  }
+  os << std::endl << "# |MST|: " << g.getMSTLength() << std::endl;
+  return os;
 }

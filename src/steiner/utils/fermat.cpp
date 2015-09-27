@@ -118,27 +118,29 @@ int Utils::getFermatPoint(Point &A, Point &B, Point &C, Point &res) {
   return -1;
 }
 
-SteinerTree* Utils::getFermatSMT(Graph &triangle, bool add_sp) {
-  std::vector<Point> *points = triangle.getPointsPtr();
-  assert(points->size()==3);
+void Utils::getFermatSMT(SteinerTree &triangle, bool add_sp) {
+  assert(triangle.n()==3);
   
-  SteinerTree *st = new SteinerTree(*points);
-  std::vector<Edge> *edges   = st->getEdgesPtr();
-  st->setMSTLength(triangle.getMSTLength());
+  std::vector<Edge> &edges = triangle.getEdges();
+  edges.clear();
+ 
+  Point sp(triangle.dimension());
+  Point &p0 = triangle.getPoint(0);
+  Point &p1 = triangle.getPoint(1);
+  Point &p2 = triangle.getPoint(2);
+  int add = Utils::getFermatPoint(p0, p1, p2, sp);
   
-  Point sp((*points)[0].dim());
-  int add = Utils::getFermatPoint((*points)[0], (*points)[1], (*points)[2], sp);
   if(add == -1 || add_sp) {
-    edges->push_back(Edge(0,3, Utils::length((*points)[0], sp)));
-    edges->push_back(Edge(1,3, Utils::length((*points)[1], sp)));
-    edges->push_back(Edge(2,3, Utils::length((*points)[2], sp)));
+    edges.push_back(Edge(0,3, Utils::length(p0, sp)));
+    edges.push_back(Edge(1,3, Utils::length(p1, sp)));
+    edges.push_back(Edge(2,3, Utils::length(p2, sp)));
     sp.setSteiner();
-    st->getPointsPtr()->push_back(sp);
+    triangle.getSteinerPoints().push_back(sp);
   }
   else {
-    int p1 = (add+1) % 3, p2 = (add+2) % 3;
-    edges->push_back(Edge(add,p1, Utils::length((*points)[p1], (*points)[add])));
-    edges->push_back(Edge(add,p2, Utils::length((*points)[p2], (*points)[add])));
+    unsigned int pi1 = (add+1) % 3, pi2 = (add+2) % 3;
+    edges.push_back(Edge(add,pi1, Utils::length(triangle.getPoint(pi1), triangle.getPoint(add))));
+    edges.push_back(Edge(add,pi2, Utils::length(triangle.getPoint(pi2), triangle.getPoint(add))));
   }
-  return st;
+  triangle.setSMTLength(triangle.getLength());
 }

@@ -26,8 +26,8 @@ public:
    * Finds the Steiner points and edges using a concatenation heuristic
    * for selecting the topology.
    */
-  SteinerTree *findSteinerPoints(Graph &subgraph);
-
+  void findSteinerPoints(SteinerTree &subgraph);
+  
   /**
    * Inserts a terminal in a full Steiner tree.
    *
@@ -37,7 +37,7 @@ public:
    *
    * @return      The (allocated) resulting SteinerTree
    */
-  SteinerTree *insertTerminal(SteinerTree *fst, Utils::Point &p, double mst_length);
+  void insertTerminal(SteinerTree &fst, Utils::Point &p, double mst_length);
   
 protected:
 private:
@@ -49,8 +49,7 @@ private:
   double insertAndRemovePoint(unsigned int i,
 			      unsigned int sp,
 			      unsigned int j);
-
-  //int curN; //Unused
+  
   int topo_vec[CNMAX][2];
   bool do_clean_up;
 };

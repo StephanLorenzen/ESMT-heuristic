@@ -290,6 +290,8 @@ namespace Utils {
      * Generate a hashmap-key for this edge.
      */
     static unsigned long key(int i0, int i1);
+
+    Edge &operator=(Edge const& other);
     
     /** Index of first end point. */
     int i0;

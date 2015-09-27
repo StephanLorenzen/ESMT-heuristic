@@ -248,3 +248,12 @@ unsigned long Utils::Edge::key(int i0, int i1) {
   }
   return (b << 32) | a;
 }
+
+Utils::Edge &Utils::Edge::operator=(Utils::Edge const& other) {
+  if(this != &other) {
+    this->i0     = other.i0;
+    this->i1     = other.i1;
+    this->length = other.length;
+  }
+  return *this;
+}

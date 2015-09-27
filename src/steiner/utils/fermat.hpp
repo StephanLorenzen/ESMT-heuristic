@@ -36,7 +36,7 @@ namespace Utils {
    *
    * @return         An allocated Steiner Tree.
    */
-  SteinerTree* getFermatSMT(Graph &triangle, bool add_sp = false);
+  void getFermatSMT(SteinerTree &triangle, bool add_sp = false);
 }
 
 #endif // FERMAT_H

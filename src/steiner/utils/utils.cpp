@@ -25,45 +25,76 @@ bool compareLength(const Edge &e1, const Edge &e2) {
  * Runs in O(n lg n)
  */
 Graph Utils::MSTKruskal(Graph &graph) {
-  // Iterators
-  std::vector<Point>::iterator pit;
+  Graph res(graph.getPoints(), graph.getPointsRef(), graph.getEdges());
+  Utils::MSTKruskalMod(res);
+  return res;
+}
+
+Graph Utils::MSTKruskal(std::vector<Point> &points) {
+  std::vector<Edge> edges;
+  for(unsigned int i=0; i<points.size(); i++)
+    for(unsigned int j=i+1; j<points.size(); j++)
+      edges.push_back(Edge(i,j,Utils::length(points[i],points[j])));
+  Graph g(points);
+  // Set the new edges
+  g.getEdges() = edges;
+  // Compute
+  return Utils::MSTKruskal(g);
+}
+
+void Utils::MSTKruskalMod(Graph &graph) {
+  // Find resulting edges
+  std::vector<Edge> res;
+  Utils::MSTKruskalEdges(graph, res);
+  
+  // Update edges
+  graph.getEdges() = res;
+}
+
+void Utils::MSTKruskalEdges(Graph &graph, std::vector<Edge> &res) {
+  // Iterator
   std::vector<Edge>::iterator eit;
 
-  // Terminals and edges
-  std::vector<Point> *points = graph.getPointsPtr();
-  std::vector<Edge>  *edges  = graph.getEdgesPtr();
+  // Edges
+  std::vector<Edge> &edges = graph.getEdges();
   
-  Graph result = Graph(*points);
-  // Result
-  std::vector<Edge> *res_edges = result.getEdgesPtr();
-
   // List of disjoint sets
-  std::vector< Utils::DisjointSet<Point*> > sets;
-
+  std::vector< Utils::DisjointSet<unsigned int> > sets;
+  
   // Create the disjoint sets
-  for(pit = points->begin(); pit != points->end(); ++pit) {
-    Utils::DisjointSet<Point*> ds(&(*pit));
+  for(unsigned int i = 0; i < graph.n(); i++) {
+    Utils::DisjointSet<unsigned int> ds(i);
     sets.push_back(ds);
   }
-  
   // Sort the list of edges according to length
-  std::sort(edges->begin(), edges->end(), compareLength);
-
+  std::sort(edges.begin(), edges.end(), compareLength);
+  
   // Iterate through the edges
-  for(eit = edges->begin(); eit != edges->end(); ++eit) {
+  for(eit = edges.begin(); eit != edges.end(); ++eit) {
     // Get the two sets from the list of sets
-    Utils::DisjointSet<Point*> *ds1 = &sets[eit->i0];
-    Utils::DisjointSet<Point*> *ds2 = &sets[eit->i1];
+    Utils::DisjointSet<unsigned int> &ds1 = sets[eit->i0];
+    Utils::DisjointSet<unsigned int> &ds2 = sets[eit->i1];
 
     // Check if we may safely concatenate
-    if(ds1->findSet() != ds2->findSet()) {
+    if(ds1.findSet() != ds2.findSet()) {
       // Add edge to the resulting list and union
-      res_edges->push_back(*eit);
-      ds1->setUnion(ds2);
+      res.push_back(*eit);
+      ds1.setUnion(ds2);
     }
   }
+}
 
-  return result;
+double Utils::MSTLengthKruskal(std::vector<Point> &points) {
+  std::vector<Edge> edges;
+  for(unsigned int i=0; i<points.size(); i++)
+    for(unsigned int j=i+1; j<points.size(); j++)
+      edges.push_back(Edge(i,j,Utils::length(points[i],points[j])));
+  Graph g(points);
+  // Set the new edges
+  g.getEdges() = edges;
+  // Compute
+  Utils::MSTKruskalMod(g);
+  return g.getLength();
 }
 
 double Utils::frand() {
@@ -91,70 +122,58 @@ void validateRec(std::vector<Edge> &edges, std::vector<int> &pf,
 }
 
 bool Utils::validate(SteinerTree &st) {
-  unsigned int i, j, p = 0, sp = 0;
-  std::vector<Point> *points = st.getPointsPtr();
-  std::vector<Edge>  *edges  = st.getEdgesPtr();
+  unsigned int i, j, p = st.n(), sp = st.s();
+  std::vector<Edge>  &edges  = st.getEdges();
   // No of edges check
-  if(points->size() != edges->size()+1) {
+  if(st.m() != edges.size()+1) {
     std::cerr << "Wrong number of edges!!!" << std::endl;
     return false;
   }
-
-  for(i = 0; i < points->size(); i++) {
-    if((*points)[i].isSteiner())
-      sp++;
-    else
-      p++;
-  }
+  
   if(sp > p-2) {
     std::cerr << "Too many Steiner points: " << sp << " vs. " << p
 	      << " terminals." << std::endl;
     return false;
   }
   
-  std::vector<int> pf(points->size(), 0);
-  std::vector<int> ef(edges->size(), 0);
-  validateRec(*edges, pf, ef, 0, -1);
+  std::vector<int> pf(st.m(), 0);
+  std::vector<int> ef(edges.size(), 0);
+  validateRec(edges, pf, ef, 0, -1);
 
   for(i = 0; i < pf.size(); i++) {
     if(pf[i] == 0) {
-      std::cerr << "Point not reached: " << i << " " << (*points)[i] << std::endl;
+      std::cerr << "Point not reached: " << i << " " << st.getPoint(i) << std::endl;
       return false;
     }
     else if(pf[i] > 1) {
       std::cerr << "Point reached more than once: "
-		<< i << " " << (*points)[i] << std::endl;
+		<< i << " " << st.getPoint(i) << std::endl;
       return false;
     }
   }
   for(i = 0; i < ef.size(); i++) {
     if(!ef[i]) {
-      std::cerr << "Edge not reached: " << i << " (" << (*edges)[i].i0
-		<< " : " << (*edges)[i].i1 << ")" << std::endl;
+      std::cerr << "Edge not reached: " << i << " (" << edges[i].i0
+		<< " : " << edges[i].i1 << ")" << std::endl;
       return false;
     }
     else if(ef[i] > 1) {
-      std::cerr << "Edge reached more than once: " << i << " (" << (*edges)[i].i0
-		<< " : " << (*edges)[i].i1 << ")" << std::endl;
+      std::cerr << "Edge reached more than once: " << i << " (" << edges[i].i0
+		<< " : " << edges[i].i1 << ")" << std::endl;
       return false;
     }
   }
 
-  Graph g;
-  for(i = 0; i < p; i++) {
-    g.getPointsPtr()->push_back((*points)[i]);
-    for(j = i+1; j < p; j++) {
-      g.getEdgesPtr()->push_back(Edge(i,j,Utils::length((*points)[i],(*points)[j])));
-    }
-  }
-  g = Utils::MSTKruskal(g);
-  double mst_length = g.getLength();
+  std::vector<Point> points;
+  for(i = 0; i < p; i++)
+    points.push_back(st.getPoint(i));
+  double mst_length = Utils::MSTLengthKruskal(points);
   if(st.getMSTLength()-mst_length>0.0001) {
     std::cerr << "MST-length is not correct!" << std::endl
 	      << "  Correct |MST|: " << mst_length << std::endl
 	      << "  Actual |MST|:  " << st.getMSTLength() << std::endl;
     return false;
   }
-
+  
   return true;
 }

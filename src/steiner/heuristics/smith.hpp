@@ -34,7 +34,7 @@ public:
   /**
    * Finds the Steiner points and edges using Smith's iterative algorithm.
    */
-  SteinerTree *findSteinerPoints(Graph &subgraph);
+  void findSteinerPoints(SteinerTree &subgraph);
 
 protected:
 private:

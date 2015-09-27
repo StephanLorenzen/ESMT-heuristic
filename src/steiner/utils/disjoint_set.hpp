@@ -55,7 +55,7 @@ namespace Utils {
      *
      * @param otherSet  The DisjointSet to union with.
      */
-    void setUnion(DisjointSet<T> *otherSet);
+    void setUnion(DisjointSet<T> &otherSet);
 
     /**
      * Equallity operator.

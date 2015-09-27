@@ -5,20 +5,24 @@
 
 #include "steiner/utils/point.hpp"
 
+typedef unsigned int   Pidx;
+typedef Utils::Point   Point;
+typedef Utils::Edge    Edge;
+
 class Graph {
 public:
 
   /**
    * Default constructor.
    */
-  Graph();
+  Graph(std::vector<Utils::Point> &pointsRef);
   
   /**
    * Constructor. Creates a graph with no edges.
    *
    * @param points   The points for this graph.
    */
-  Graph(std::vector<Utils::Point> &points);
+  Graph(std::vector<Pidx> &points, std::vector<Utils::Point> &pointsRef);
 
   /**
    * Constructor.
@@ -26,7 +30,8 @@ public:
    * @param points   The points for this graph.
    * @param edges    The edges for this graph.
    */
-  Graph(std::vector<Utils::Point> &points, std::vector<Utils::Edge> &edges);
+  Graph(std::vector<Pidx> &points, std::vector<Utils::Point> &pointsRef,
+	std::vector<Utils::Edge> &edges);
   
   /**
    * Destructor.
@@ -38,36 +43,36 @@ public:
    *
    * @return  A copy of the set of points for this graph.
    */
-  std::vector<Utils::Point> getPoints();
-
+  std::vector<Pidx> &getPoints();
+  std::vector<Utils::Point> &getPointsRef();
+  
   /**
    * Getter for the edges.
    *
    * @return  A copy of the set of edges for this graph.
    */
-  std::vector<Utils::Edge> getEdges();
+  std::vector<Utils::Edge> &getEdges();
+  
+  Utils::Point &getPoint(unsigned int index) const;
+  
+  Pidx pidx(unsigned int index) const;
 
-  /**
-   * Getter for a pointer to the points.
-   *
-   * @return  A pointer to the list of points for this set.
-   */
-  std::vector<Utils::Point> *getPointsPtr();
-
-  /**
-   * Getter for a pointer to the edges.
-   *
-   * @return  A pointer to the list of edges for this set.
-   */
-  std::vector<Utils::Edge> *getEdgesPtr();
+  unsigned int n() const;
 
   /**
    * Calculates the length of the MST for this graph.
    *
    * @return   The length of the MST for this graph.
    */
-  double getMSTLength();
+  double getMSTLength() const;
 
+  /**
+   * Calculates the length of the MST for this graph.
+   *
+   * @return   The length of the MST for this graph.
+   */
+  double getBMSTLength() const;
+  
   /**
    * Setter for the MST length.
    *
@@ -78,30 +83,49 @@ public:
    */
   void setMSTLength(double l);
 
+  void setBMSTLength(double l);
+
+  void calculateMSTLength();
+  void calculateBMSTLength();
+  
   /**
    * Calculates the length of this graph.
    *
    * @return   The length of this graph.
    */
-  double getLength();
+  double getLength() const;
 
   /**
    * Returns the dimension of this graph
    *
    * @return    The dimension of this graph
    */
-  unsigned int dimension();
+  unsigned int dimension() const;
+
+  Graph &operator=(const Graph&);
   
 protected:
   
   /** The points of this graph. */
-  std::vector<Utils::Point> points;
+  std::vector<Utils::Point> *pointsRef;
+  std::vector<Pidx> pidxs;
   /** The edges of this graph. */
-  std::vector<Utils::Edge>  edges;
+  std::vector<Utils::Edge> edges;
   /** The length of the MST of this graph. */
-  double                    mst_length;
-  
+  double mst_length;
+  double bmst_length;
 private:
 };
+
+/**
+ * Prints the Graph
+ *
+ * @param os     The out-stream
+ * @param st     The Graph to print.
+ *
+ * @return       A reference to the stream.
+ */
+std::ostream& operator<<(std::ostream& os, Graph &g);
+
 
 #endif // GRAPH_H

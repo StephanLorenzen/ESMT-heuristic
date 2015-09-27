@@ -81,12 +81,12 @@ namespace Utils {
     /**
      * Getter for the list of simplices.
      */
-    std::vector<Simplex>     *getSimplices();
+    std::vector<Simplex>     &getSimplices();
     
     /**
      * Getter for the list of point handles.
      */
-    std::vector<PointHandle> *getPointHandles();
+    std::vector<PointHandle> &getPointHandles();
     
     /**
      * Stats: Count all faces
@@ -97,28 +97,22 @@ namespace Utils {
   private:
     /**
      * Performs the Delaunay tesselation using qhull.
-     *
-     * @param d   The dimension.
      */
-    void doDelaunayQHull(int d);
+    void doDelaunayQHull();
 
     /**
      * Sub procedure for doDelaunayQHull.
      *
      * Creates an input file for the qhull program.
-     *
-     * @param d   The dimension.
      */
-    void doPrepInputQHull(int d);
+    void doPrepInputQHull();
     
     /**
      * Sub procedure for doDelaunayQHull.
      *
      * Parses the output file from the qhull program.
-     *
-     * @param d   The dimension.
      */
-    void doParseOutputQHull(int d);
+    void doParseOutputQHull();
 
     /**
      * Recursive procedure for finding all faces

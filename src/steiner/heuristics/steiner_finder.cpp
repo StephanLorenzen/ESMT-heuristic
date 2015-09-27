@@ -21,29 +21,36 @@ SteinerFinder::SteinerFinder(SubgraphHeuristic* sh) {
 
 SteinerFinder::~SteinerFinder() {}
 
-SteinerTree* SteinerFinder::findSteinerPoints(Graph &subgraph) {
-  std::vector<Point> *points = subgraph.getPointsPtr();
-  this->mst_length = subgraph.getLength();
+void SteinerFinder::findSteinerPoints(SteinerTree &subgraph) {
+  unsigned int i;
+  
+  this->mst_length = subgraph.getMSTLength();
   this->dim        = subgraph.dimension();
   
-  assert(points->size() > 2);
+  std::vector<Point> points(subgraph.n(), Point(this->dim));
+  for(i = 0; i < subgraph.n(); i++)
+    points[i] = subgraph.getPoint(i);
+  
+  assert(points.size() > 2);
 
-  if(points->size() == 3)
-    return Utils::getFermatSMT(subgraph);
+  if(points.size() == 3) {
+    Utils::getFermatSMT(subgraph);
+    return;
+  }  
   
   this->best_ratio  = 2.0;
   this->best_tree   = NULL;
   this->best_length = this->mst_length;
-  unsigned int i;
-  for(i = 0; i < points->size(); i++) {
+  for(i = 0; i < subgraph.n(); i++) {
     std::vector<int> part;
     part.push_back(i);
-    this->simplexPartitionRec(*points, part, i);
+    //this->simplexPartitionRec(*points, part, i);
   }
-  return best_tree;
 }
 
-void SteinerFinder::simplexPartitionRec(std::vector<Point> &points, std::vector<int> &curPart, unsigned int index) {
+void SteinerFinder::simplexPartitionRec(std::vector<Point> &points,
+					std::vector<int> &curPart,
+					unsigned int index) {
   unsigned int i;
   SteinerTree *st;
   if(points.size()-curPart.size() < 3)
@@ -68,7 +75,7 @@ void SteinerFinder::simplexPartitionRec(std::vector<Point> &points, std::vector<
 /* partOne may be assumed to be sorted! */
 SteinerTree *SteinerFinder::merge(std::vector<Point> &points,
 				  std::vector<int> &partOne) {
-  Graph p[2];
+  /*Graph p[2];
   std::vector<int> map[2];
   unsigned int i, j;
   SteinerTree *st[2];
@@ -82,7 +89,7 @@ SteinerTree *SteinerFinder::merge(std::vector<Point> &points,
       p[1].getPointsPtr()->push_back(points[i]);
       map[1].push_back(i);
     }
-  }
+    }*/
   /*
   std::cout << "P1: ";
   for(i = 0; i < map[0].size(); i++)
@@ -94,7 +101,7 @@ SteinerTree *SteinerFinder::merge(std::vector<Point> &points,
     std::cout << map[1][i] << " ";
   std::cout << std::endl;
   */
-  p[0].setMSTLength(this->mst_length);
+  /*p[0].setMSTLength(this->mst_length);
   p[1].setMSTLength(this->mst_length);
 
   Point c = centroid(p[1]);
@@ -182,15 +189,15 @@ SteinerTree *SteinerFinder::merge(std::vector<Point> &points,
   delete st[1];
   
   result->setMSTLength(this->mst_length);
-  return result;
+  return result;*/return NULL;
 }
 
 Point SteinerFinder::centroid(Graph& subgraph) {
   Point result(this->dim);
-  int size = subgraph.getPointsPtr()->size();
+  int size = subgraph.n();
   for (int i = 0; i < size; i++)
     for (int j = 0; j < this->dim; j++)
-      result[j] += (*subgraph.getPointsPtr())[i][j] / size;
+      result[j] += subgraph.getPoint(i)[j] / size;
 
   return result;
 }

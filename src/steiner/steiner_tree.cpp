@@ -4,78 +4,122 @@
 #include "steiner/steiner_tree.hpp"
 #include "steiner/utils/point.hpp"
 
-SteinerTree::SteinerTree()
-  : Graph()
+SteinerTree::SteinerTree(std::vector<Utils::Point> &pointsRef)
+  : Graph(pointsRef)
 {
-  this->steiner_ratio  = -1.0;
-  this->smt_length     = -1.0;
+  this->ratio      = -1.0;
+  this->b_ratio    = -1.0;
+  this->smt_length = -1.0;
 }
 
-SteinerTree::SteinerTree(std::vector<Utils::Point> &terminals)
-  : Graph(terminals)
+SteinerTree::SteinerTree(std::vector<Pidx> &terminals, std::vector<Utils::Point> &pointsRef)
+  : Graph(terminals, pointsRef)
 {
-  this->steiner_ratio  = -1.0;
-  this->smt_length     = -1.0;
+  this->ratio      = -1.0;
+  this->b_ratio    = -1.0;
+  this->smt_length = -1.0;
 }
 
-SteinerTree::SteinerTree(std::vector<Utils::Point> &terminals,
+SteinerTree::SteinerTree(std::vector<Pidx> &terminals,
+			 std::vector<Utils::Point> &pointsRef,
 			 std::vector<Utils::Edge> &edges)
-  : Graph(terminals, edges)
+  : Graph(terminals, pointsRef, edges)
 {
-  this->steiner_ratio  = -1.0;
-  this->smt_length     = -1.0;
+  this->ratio      = -1.0;
+  this->b_ratio    = -1.0;
+  this->smt_length = -1.0;
 }
 
 SteinerTree::~SteinerTree() {}
 
-double SteinerTree::getSMTLength() {
-  if(this->smt_length > 0.0)
-    return this->smt_length;
-  
-  // Assume that this is a SMT. Simply get the length
-  this->smt_length = this->Graph::getLength();
-  
+double SteinerTree::getSMTLength() const {
   return this->smt_length;
 }
 
 void SteinerTree::setSMTLength(double l) {
   this->smt_length = l;
+  this->ratio      = this->smt_length / this->getMSTLength();
+  this->b_ratio    = this->smt_length / this->getBMSTLength();
 }
 
-double SteinerTree::getSteinerRatio() {
-  if(this->steiner_ratio > 0.0)
-    return this->steiner_ratio;
+double SteinerTree::getSteinerRatio() const {
+  return this->ratio;
+}
 
-  this->steiner_ratio = this->getSMTLength() / this->getMSTLength();
-  return this->steiner_ratio;
+double SteinerTree::getBSteinerRatio() const {
+  return this->b_ratio;
 }
 
 void SteinerTree::setSteinerRatio(double l) {
-  this->steiner_ratio = l;
+  this->ratio = l;
 }
+
+unsigned int SteinerTree::m() const {
+  return Graph::n() + this->steiner_points.size();
+}
+
+unsigned int SteinerTree::s() const {
+  return this->steiner_points.size();
+}
+
+std::vector<Point> &SteinerTree::getSteinerPoints() {
+  return this->steiner_points;
+}
+
+Point &SteinerTree::getPoint(unsigned int index) {
+  assert(index < this->m());
+  if(index >= this->n())
+    return this->getSteinerPoint(index - this->n());
+  else
+    return Graph::getPoint(index);
+}
+
+Point &SteinerTree::getSteinerPoint(unsigned int index) {
+  assert(index < this->s());
+  return this->steiner_points[index];
+}
+
+double SteinerTree::getLength() {
+  std::vector<Edge>::const_iterator it;
+  double result = 0.0;
+  for(it = this->edges.begin(); it != this->edges.end(); it++) {
+    result += Utils::length(this->getPoint(it->i0), this->getPoint(it->i1));
+  }
+  return result;
+}
+
 
 std::ostream& operator<<(std::ostream& os, SteinerTree &st) {
   unsigned int i;
   std::string indent("  ");
-  std::vector<Utils::Point> points = st.getPoints();
-  std::vector<Utils::Edge>  edges  = st.getEdges();
+  std::vector<Utils::Edge> &edges = st.getEdges();
+  
   os << "# Terminals" << std::endl;
-  for(i = 0; i < points.size(); i++) {
-    if(points[i].isSteiner())
-      break;
-    os << indent << i << " " << points[i] << std::endl;
-  }
+  for(i = 0; i < st.n(); i++)
+    os << indent << i << " " << st.getPoint(i) << std::endl;
+  
   os << std::endl << "# Steiner points" << std::endl;
-  for(; i < points.size(); i++) {
-    os << indent << i << " " << points[i] << std::endl;
-  }
+  for(; i < st.m(); i++)
+    os << indent << i << " " << st.getPoint(i) << std::endl;
+  
   os << std::endl << "# Edges" << std::endl;
-  for(i = 0; i < edges.size(); i++) {
+  for(i = 0; i < edges.size(); i++)
     os << indent << "(" << edges[i].i0
        << " " << edges[i].i1 << ")" << std::endl;
-  }
+  
   os << std::endl << "# |MST|: " << st.getMSTLength() << std::endl
      << "# |SMT|: " << st.getSMTLength() << std::endl
      << "# Steiner ratio: " << st.getSteinerRatio() << std::endl;
   return os;
+}
+
+SteinerTree &SteinerTree::operator=(const SteinerTree &other) {
+  if(this != &other) {
+    Graph::operator=(other);
+    this->steiner_points = other.steiner_points;
+    this->smt_length     = other.smt_length;
+    this->ratio          = other.ratio;
+    this->b_ratio        = other.b_ratio;
+  }
+  return *this;
 }

@@ -273,25 +273,24 @@ double Iterative::dist(int i1, int i2) {
   return Utils::length(this->P[i1], this->P[i2]);
 }
 
-void Iterative::cleanUp(std::vector<Point> *points, std::vector<Edge> *edges,
+void Iterative::cleanUp(std::vector<Point> &steiner_points, std::vector<Edge> &edges,
 			bool doCleanUp) {
   // Now we have to remove any (near-) zero edges.
   unsigned int i, j, k, n, sp, g, a, b;
   double l;
 
-  points->clear();
-  edges->clear();
-  points->insert(points->end(), this->P.begin(), this->P.begin()+this->N);
+  steiner_points.clear();
+  edges.clear();
   if(!doCleanUp) {
-    points->insert(points->end(), this->P.begin()+this->N, this->P.end());
-    for(i = this->N; i < points->size(); i++)
-      (*points)[i].setSteiner();
+    steiner_points.insert(steiner_points.end(), this->P.begin()+this->N, this->P.end());
+    for(i = 0; i < steiner_points.size(); i++)
+      steiner_points[i].setSteiner();
     for(i = 0; i < this->S; i++) {
       k = i + this->N;
       for(j = 0; j < 3; j++) {
 	n = this->adj[i][j];
 	if(n < k)
-	  edges->push_back(Edge(k, n, this->dist(k, n)));
+	  edges.push_back(Edge(k, n, this->dist(k, n)));
       }
     }
   }
@@ -342,9 +341,9 @@ void Iterative::cleanUp(std::vector<Point> *points, std::vector<Edge> *edges,
     // Add sps
     for(i = 0; i < this->S; i++) {
       if(this->adj[i][0] != (int)g) {
-	map[i] = points->size();
-	points->push_back(this->P[i+this->N]);
-	points->back().setSteiner();
+	map[i] = steiner_points.size()+this->N;
+	steiner_points.push_back(this->P[i+this->N]);
+	steiner_points.back().setSteiner();
       }
     }
     // Add terminal-terminal edges.
@@ -352,7 +351,7 @@ void Iterative::cleanUp(std::vector<Point> *points, std::vector<Edge> *edges,
       for(j = 0; j < tadj[i].size(); j++) {
 	n = tadj[i][j];
 	if(n < i)
-	  edges->push_back(Edge(i, n, this->dist(i, n)));
+	  edges.push_back(Edge(i, n, this->dist(i, n)));
       }
     }
     for(i = 0; i < this->S; i++) {
@@ -362,7 +361,7 @@ void Iterative::cleanUp(std::vector<Point> *points, std::vector<Edge> *edges,
 	if(n < k) {
 	  if(n >= this->N)
 	    n = map[n-this->N];
-	  edges->push_back(Edge(map[k-this->N], n, this->dist(map[k-this->N], n)));
+	  edges.push_back(Edge(map[k-this->N], n, this->dist(map[k-this->N], n)));
 	}
       }
     }

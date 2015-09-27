@@ -69,7 +69,7 @@ protected:
    * @param doCleanUp If set to true, Steiner points close to terminals will be
    *                  removed.
    */
-  void cleanUp(std::vector<Utils::Point> *points, std::vector<Utils::Edge> *edges,
+  void cleanUp(std::vector<Utils::Point> &steiner_points, std::vector<Utils::Edge> &edges,
 	       bool doCleanUp = true);
 
   std::vector<Utils::Point> P; // Points -> [0..N-1] is terminals, [N..S-1] steiner

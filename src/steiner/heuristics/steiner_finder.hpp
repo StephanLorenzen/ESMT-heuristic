@@ -32,7 +32,7 @@ public:
    *
    * @return           Approximated ESMT for the given point set.
    */
-  SteinerTree* findSteinerPoints(Graph &subgraph);
+  void findSteinerPoints(SteinerTree &subgraph);
   
 protected:
 private:

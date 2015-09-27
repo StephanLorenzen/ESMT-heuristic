@@ -31,7 +31,7 @@ public:
    * @param subgraph   The input subgraph. Must be an MST for the given
    *                   point set.
    */
-  virtual SteinerTree *findSteinerPoints(Graph &subgraph) = 0;
+  virtual void findSteinerPoints(SteinerTree &subgraph) = 0;
 
 protected:
 private:

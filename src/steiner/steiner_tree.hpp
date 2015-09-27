@@ -2,6 +2,7 @@
 #define STEINER_TREE_H
 
 #include <vector>
+#include <assert.h>
 
 #include "steiner/graph.hpp"
 #include "steiner/utils/point.hpp"
@@ -17,7 +18,7 @@ public:
   /**
    * Default constructor.
    */
-  SteinerTree();
+  SteinerTree(std::vector<Utils::Point> &pointsRef);
 
   /**
    * Constructor. Creates a SteinerTree with no edges
@@ -26,7 +27,7 @@ public:
    *                   This list contains the Steiner points too,
    *                   with the isSteiner flag set to true.
    */
-  SteinerTree(std::vector<Utils::Point> &terminals);
+  SteinerTree(std::vector<Pidx> &terminals, std::vector<Utils::Point> &pointsRef);
   
   /**
    * Constructor.
@@ -36,7 +37,8 @@ public:
    *                   with the isSteiner flag set to true.
    * @param edges      The list of edges for this graph.
    */
-  SteinerTree(std::vector<Utils::Point> &terminals,
+  SteinerTree(std::vector<Pidx> &terminals,
+	      std::vector<Utils::Point> &pointsRef,
 	      std::vector<Utils::Edge> &edges);
 
   /**
@@ -49,7 +51,7 @@ public:
    *
    * @return  The length of this SMT.
    */
-  double getSMTLength();
+  double getSMTLength() const;
 
   /**
    * Setter for the SMT length.
@@ -61,6 +63,8 @@ public:
    */
   void setSMTLength(double l);
 
+  void calculateSMTLength();
+
   /**
    * Getter for the Steiner ratio.
    *
@@ -68,7 +72,8 @@ public:
    *
    * @return  The Steiner ratio.
    */
-  double getSteinerRatio();
+  double getSteinerRatio() const;
+  double getBSteinerRatio() const;
 
   /**
    * Set the Steiner ratio for this ST.
@@ -80,12 +85,31 @@ public:
    */
   void setSteinerRatio(double l);
   
+  std::vector<Point> &getSteinerPoints();
+
+  unsigned int m() const;
+  unsigned int s() const;
+
+  Utils::Point &getSteinerPoint(unsigned int index);
+  Utils::Point &getPoint(unsigned int index);
+
+  /**
+   * Calculates the length of this graph.
+   *
+   * @return   The length of this graph.
+   */
+  double getLength();
+
+  SteinerTree &operator=(const SteinerTree&);
+  
 protected:
+  std::vector<Utils::Point> steiner_points;
 private:
   /** The SMT length for this graph. */
   double smt_length;
   /** The Steiner ratio for this graph. */
-  double steiner_ratio;
+  double ratio;
+  double b_ratio;
 };
 
 /**

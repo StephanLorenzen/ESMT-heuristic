@@ -55,9 +55,9 @@ T Utils::DisjointSet<T>::getValue() {
  * The Union procedure
  */
 template <class T>
-void Utils::DisjointSet<T>::setUnion(DisjointSet<T> *otherSet) {
+void Utils::DisjointSet<T>::setUnion(DisjointSet<T> &otherSet) {
   Utils::DisjointSet<T> *a = this->findSet();
-  Utils::DisjointSet<T> *b = otherSet->findSet();
+  Utils::DisjointSet<T> *b = otherSet.findSet();
   a->link(b);
 }
 
@@ -91,4 +91,4 @@ bool Utils::DisjointSet<T>::operator!=(Utils::DisjointSet<T> const &otherSet) {
 
 // Needed for each template use (or linker will go bananas)
 template class Utils::DisjointSet<Utils::Point*>;
-template class Utils::DisjointSet<int>;
+template class Utils::DisjointSet<unsigned int>;

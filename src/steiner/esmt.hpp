@@ -10,6 +10,11 @@
 #include "steiner/iterative.hpp"
 #include "steiner/utils/point.hpp"
 #include "steiner/utils/delaunay.hpp"
+#include "steiner/utils/bottleneck_graph/bg_naive.hpp"
+
+// Bottleneck Graph - allowed values
+#define BOTTLENECK_GRAPH_NONE  0
+#define BOTTLENECK_GRAPH_NAIVE 1
 
 /**
  * @class ESMT
@@ -46,7 +51,7 @@ public:
    */
   ESMT(std::vector<Utils::Point> &points, SubgraphHeuristic *sh,
        bool concat_subgraphs, bool post_optimise, bool special_concat,
-       bool verbose = false);
+       unsigned int use_bg = BOTTLENECK_GRAPH_NONE, bool verbose = false);
 
 
   /**
@@ -66,7 +71,7 @@ public:
    */
   ESMT(Utils::Delaunay &del, SubgraphHeuristic *sh,
        bool concat_subgraphs, bool post_optimise, bool special_concat,
-       bool verbose = false);
+       unsigned int use_bg = BOTTLENECK_GRAPH_NONE, bool verbose = false);
 
   /**
    * Destructor
@@ -86,6 +91,8 @@ public:
     unsigned int no_of_simplices;
     // Covered faces
     std::vector<unsigned int> covered_faces;
+    // All faces
+    std::vector<unsigned int> faces;
     // Sub-trees in queue
     unsigned int sub_trees_in_queue;
     // Added sub-trees
@@ -105,7 +112,7 @@ public:
    * @return  The statistics object.
    */
   ESMT::Stats *getStats();
-
+  
   /////////////////////////////////////////////////////
   // SubST structure
   
@@ -181,14 +188,14 @@ public:
    *
    * @return  The list of covered faces.
    */
-  std::vector<ESMT::Subset> &getCoveredFaces();
+  std::vector<Graph> &getCoveredFaces();
 
   /**
    * Getter for the list of generated SMTs.
    *
    * @return  The list of generated SMTs.
    */
-  std::vector<ESMT::SubST> &getComponents();
+  std::vector<SteinerTree> &getComponents();
 
 protected:
 private:
@@ -213,6 +220,7 @@ private:
 		bool concat_subgraphs,
 		bool post_optimise,
 		bool special_concat,
+		unsigned int use_bg,
 		bool verbose = false);
 
   /**
@@ -232,6 +240,7 @@ private:
 		bool concat_subgraphs,
 		bool post_optimise,
 		bool special_concat,
+		unsigned int use_bg,
 		bool verbose = false);
   
   /**
@@ -252,9 +261,17 @@ private:
    *                      added (if possible) before this->smts.
    * @param verbose       If true, stats will be printed
    */
-  void doConcatenate(std::vector<ESMT::SubST> &pre_add_list, bool verbose = false);
+  void doConcatenate(std::vector<SteinerTree> &pre_add_list, bool verbose = false);
 
-
+  /**
+   * Performs the concatenation step of the algorithm, using the given bottleneck graph
+   * for MST lengths.
+   * Assumes that this->smts to initially contain all sub-trees in order by b-ratio.
+   * 
+   * @param verbose       If true, stats will be printed
+   */
+  void doConcatenateB(bool verbose = false);
+  
   /**
    * Performs after optimisation
    *
@@ -285,10 +302,8 @@ private:
    * @param connections  Lists the connections for each point in the MST.
    * @param point        The point to be contained in all faces.
    */
-  void findFaces(std::vector< Utils::Delaunay::PointHandle > &handles,
-		 std::vector< Subset > &components,
-		 std::vector< std::vector<int> > &connections,
-		 unsigned int point);
+  void findCoveredFaces(std::vector< Utils::Delaunay::PointHandle > &handles,
+			std::vector< std::vector<int> > &connections);
 
   /**
    * The recursive part of the findFaces procedure.
@@ -302,16 +317,32 @@ private:
    * @param bound        No points with index < bound will be added.
    * @param prevSet      The index of the previous set.
    */
-  void findFacesRec(std::vector< Utils::Delaunay::PointHandle > &handles,
-		    std::vector< Subset > &components,
-		    std::vector< std::vector<int> > &connections,
-		    std::vector< int > &currentSimplices,
-		    int *map,
-		    int cur,
-		    int *mapmax,
-		    int bound,
-		    int prevSet);
-
+  void findCoveredFacesRec(std::vector< Utils::Delaunay::PointHandle > &handles,
+			   std::vector< std::vector<int> > &connections,
+			   std::vector< int > &currentSimplices,
+			   Graph prevSet,
+			   std::unordered_map<unsigned int, unsigned int> map,
+			   unsigned int &mapmax,
+			   bool *flag,
+			   unsigned int cur,
+			   unsigned int prev,
+			   unsigned int bound);
+  
+  /**
+   * The findAllFaces procedure finds all faces from the Delaunay
+   * triangulation, which contains the given point.
+   * These faces will be placed in components.
+   * The procedure will leave out faces, which cross simplex boundaries and
+   * which contains points with a lower index.
+   *
+   * @param simplex
+   * @param subset
+   * @param flag
+   */
+  void findAllFaces(Utils::Delaunay::Simplex &simplex,
+		    ESMT::Subset &subset,
+		    std::unordered_map<unsigned long, bool> &flag);
+  
   /**
    * Builds sausages recursively.
    *
@@ -362,6 +393,8 @@ private:
    */
   bool isInMST(int i0, int i1);
 
+  void setBLength(SubST &subst);
+
   ////////////////////////////////////////////////
   // Static functions
   
@@ -373,7 +406,9 @@ private:
    *
    * @return      True if st1.ratio > st2.ratio
    */
-  static bool compareSteinerRatio(const SubST &st1, const SubST &st2);
+  static bool compareSteinerRatio(const SteinerTree &st1, const SteinerTree &st2);
+
+  static bool compareSteinerBRatio(const SteinerTree &st1, const SteinerTree &st2);
 
   /**
    * Compares two edges with respect to the length.
@@ -389,15 +424,16 @@ private:
   // Attributes
 
   /** Simplices from Delaunay */
-  std::vector<Utils::Delaunay::Simplex> *simplices;
+  std::vector<Utils::Delaunay::Simplex> simplices;
   /** Flags - set to true if simplex is covered */
   std::vector<bool> is_covered_simplex;
   
   /** Components to create SMTs for */
-  std::vector<ESMT::Subset> components;
-
+  std::vector<Graph> components;
+  std::unordered_map<unsigned int, unsigned int> simplex_id;
+  
   /** List of SMTs for concatenation */
-  std::vector<ESMT::SubST> smts;
+  std::vector<SteinerTree> smts;
 
   /** Map showing if the edge i1,i2 is in the MST,
       where i1, i2 is indexes in this->points. */
@@ -405,12 +441,15 @@ private:
   
   /** Stats object */
   Stats stats;
-
+  
   /** Iterative concat used for sausage construction */
   IterativeConcat iterCon;
 
   /** Iterative Smith used for recomputing FSTs */
   IterativeSmith iterSmith;
+
+  /** BottleneckGraph object */
+  BottleneckGraphNaive *bgraph;
 };
 
 #endif // ESMT_H

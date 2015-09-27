@@ -23,7 +23,13 @@ namespace Utils {
    * @return        The MST of graph.
    */
   Graph MSTKruskal(Graph &graph);
-
+  Graph MSTKruskal(std::vector<Point> &points);
+  
+  void MSTKruskalMod(Graph &graph);
+  void MSTKruskalEdges(Graph &graph, std::vector<Edge> &edges);
+  
+  double MSTLengthKruskal(std::vector<Point> &points);
+  
   /**
    * Gets a random number between 0 and 1
    *

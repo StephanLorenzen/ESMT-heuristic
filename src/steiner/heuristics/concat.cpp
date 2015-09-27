@@ -26,35 +26,34 @@ IterativeConcat::~IterativeConcat() {}
 /*
  * Finds the steiner points and edges.
  */
-SteinerTree *IterativeConcat::findSteinerPoints(Graph &subgraph) {
-  unsigned int i, j;
-  // Create result
-  SteinerTree *result = new SteinerTree(*subgraph.getPointsPtr());
-  // Get pointers to result lists
-  std::vector<Point> *points = result->getPointsPtr();
-  std::vector<Edge>  *edges  = result->getEdgesPtr();
+void IterativeConcat::findSteinerPoints(SteinerTree &subgraph) {
+  unsigned int i, j, n;
+  
+  n = subgraph.n();
+  std::vector<Edge>  &edges  = subgraph.getEdges();
+  edges.clear();
   
   this->dim = subgraph.dimension();
-
+  
   // Check that the input is valid
   assert(this->dim < this->max_dim);
-  assert(points->size() > 2);
-  assert(points->size() < CNMAX);
+  assert(n > 2);
+  assert(n < CNMAX);
 
   // Generate the MST as an upper bound
   double mst_length = subgraph.getMSTLength();
-  
   assert(mst_length > 0.0);
 
-  this->N = points->size();
+  this->N = n;
   
-  // Copy points
-  this->P = subgraph.getPoints();
-  // Add SP-dummies
+  // Copy points (+ SP dummies)
+  this->P = std::vector<Point>();
   this->P.reserve(2*this->N-2);
+  for(i = 0; i < n; i++)
+    this->P.push_back(subgraph.getPoint(i));
   for(i = 0; i < this->N-2; i++)
     this->P.push_back(Point(this->dim));
-
+  
   double l, r;
 
   // Init topology vector
@@ -133,55 +132,48 @@ SteinerTree *IterativeConcat::findSteinerPoints(Graph &subgraph) {
       // Done
     }
   }
-  this->cleanUp(points, edges, this->do_clean_up);
+  this->cleanUp(subgraph.getSteinerPoints(), edges, this->do_clean_up);
   
-  // Compute ratio
-  result->setMSTLength(mst_length);
-  result->getSMTLength();
-  result->getSteinerRatio();
-  return result;
+  // Update length
+  subgraph.setSMTLength(subgraph.getLength());
 }
 
-SteinerTree *IterativeConcat::insertTerminal(SteinerTree *fst, Point& p,
-					     double mst_length) {
-  unsigned int i, j, n, i0, i1, is0, is1;
+void IterativeConcat::insertTerminal(SteinerTree &fst, Point& p,
+				     double mst_length) {
+  unsigned int i, j, m, n, s, i0, i1, is0, is1;
   double tmp, l = -1.0;
   
-  this->dim = fst->dimension();
+  this->dim = fst.dimension();
   assert(this->dim == p.dim());
 
-  std::vector<Point> *points = fst->getPointsPtr();
-  std::vector<Edge>  *edges  = fst->getEdgesPtr();
-  SteinerTree *result = new SteinerTree();
-  std::vector<Point> *res_points = result->getPointsPtr();
-  std::vector<Edge>  *res_edges  = result->getEdgesPtr();
-  res_points->reserve(points->size()+2);
-  res_edges->reserve(points->size()+1);
-
+  n = fst.n();
+  s = fst.s();
+  m = n+s;
+  std::vector<Edge> &edges = fst.getEdges();
+  
   // Allocate space for new points
-  this->P = std::vector<Point>(points->size()+2, Point(this->dim));
-  for(i = 0; i < points->size(); i++)
-    if(!(*points)[i].isSteiner())
-      this->P[i] = (*points)[i];
-    else
-      break;
+  this->P = std::vector<Point>();
+  this->P.reserve(m+2);
+  for(i = 0; i < n; i++)
+    this->P.push_back(fst.getPoint(i));
+  
   // Check for full tree
-  assert(points->size() == i*2-2);
+  assert(m == i*2-2);
   this->N = i+1;
   this->S = i-2;
   // New terminal
   this->P[i] = p;
   // Current Steiner points
-  for(; i < points->size(); i++)
-    this->P[i+1] = (*points)[i];
-
+  for(; i < m; i++)
+    this->P[i+1] = fst.getPoint(i);
+  
   for(i = 0; i < this->S; i++)
     for(j = 0; j < 3; j++)
       this->adj[i][j] = -1;
   
-  for(i = 0; i < edges->size(); i++) {
-    i0 = (*edges)[i].i0;
-    i1 = (*edges)[i].i1;
+  for(i = 0; i < edges.size(); i++) {
+    i0 = edges[i].i0;
+    i1 = edges[i].i1;
     // Increment sp indices
     i0 = i0 >= this->N-1 ? i0+1 : i0;
     i1 = i1 >= this->N-1 ? i1+1 : i1;
@@ -223,14 +215,11 @@ SteinerTree *IterativeConcat::insertTerminal(SteinerTree *fst, Point& p,
     }
   }
   this->insertPoint(this->N-1, sp, n);
-  this->cleanUp(res_points, res_edges, this->do_clean_up);
+  this->cleanUp(fst.getSteinerPoints(), edges, this->do_clean_up);
   
   // Compute ratio
-  result->setMSTLength(mst_length);
-  result->getSMTLength();
-  result->getSteinerRatio();
-
-  return result;
+  fst.setMSTLength(mst_length);
+  fst.setSMTLength(fst.getLength());
 }
 
 double IterativeConcat::insertPoint(unsigned int i,

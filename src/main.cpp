@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #include "libclap/clap.hpp"
-#include "test/test.hpp"
+//#include "test/test.hpp"
 #include "steiner/utils/delaunay.hpp"
 #include "steiner/utils/utils.hpp"
 #include "steiner/utils/point.hpp"
@@ -28,7 +28,7 @@ typedef Utils::Generator  Generator;
 
 int set_type_from_name(std::string &settype) {
   int t = -1;
-  if(settype.compare(0, 20, "random") == 0)
+  /*  if(settype.compare(0, 20, "random") == 0)
     t = TEST_POINT_SET_RANDOM_D;
   else if(settype.compare(0, 20, "simplex") == 0)
     t = TEST_POINT_SET_SIMPLEX;
@@ -38,6 +38,7 @@ int set_type_from_name(std::string &settype) {
     t = TEST_POINT_SET_GRID;
   else if(settype.compare(0, 20, "delaunay") == 0)
     t = TEST_POINT_SET_DELAUNAY_SIMPLICES;
+  */
   return t;
 }
 
@@ -51,6 +52,7 @@ int main(int argc, char *argv[]) {
     "-npo  --nopostopt                                                     \n"
     "-nsc  --nosubcon                                                      \n"
     "-rdc  --redocon                                                       \n"
+    "-ubg  --usebgraph     type:i                                          \n"
     "-alg  --alg           name:s                                          \n"
     "-s    --seed          value:i                                         \n"
     "-pt   --printtree                                                     \n"
@@ -72,7 +74,7 @@ int main(int argc, char *argv[]) {
   CLAP c(clap_config, argc, argv);
   
   if(c.is_set("testtopo")) {
-    std::cout << "Running topo test!" << std::endl;
+    /*std::cout << "Running topo test!" << std::endl;
     std::string name("Smith iterative");
     std::string resFile("/home/stephan/Desktop/result.dat");
     std::string path("../data/protein3D/W1.stp");
@@ -87,15 +89,16 @@ int main(int argc, char *argv[]) {
     
     Test test;
     std::cout << test.testTopology(e1,e2) << std::endl;
-    
+    */
     return 0;
   }
   else if(c.is_set("counttest")) {
-    int d = c.get_int_param("counttest",0),
+    /*int d = c.get_int_param("counttest",0),
       n = c.get_int_param("counttest",1),
       seed = c.get_int_param("counttest",2);
     Test test;
     test.doTestESMTSpecial(d, n, seed);
+    */
     return 0;
   }
   else {
@@ -118,12 +121,13 @@ int main(int argc, char *argv[]) {
       c.error_usage("Unknown sub-graph algorithm");
       return 1;
     }
-
+    
     // Heuristic parameters
     bool no_subgraph_concat = c.is_set("nsc"),
       no_post_optimise = c.is_set("npo"),
       redo_concat = c.is_set("rdc");
     int seed = c.is_set("s") ? c.get_int_param("s") : time(NULL);
+    unsigned int use_bg = c.is_set("ubg") ? c.get_int_param("ubg") : 0;
     
     int p = c.get_chosen_pattern();
     if(p == 0 && !c.is_set("batch")) {
@@ -133,12 +137,12 @@ int main(int argc, char *argv[]) {
     }
     else if(p == 0) {      
       // Check that some set is added
-      if(!c.is_set("g") && !c.is_set("gn") && !c.is_set("if") && !c.is_set("ifa")) {
+      /*if(!c.is_set("g") && !c.is_set("gn") && !c.is_set("if") && !c.is_set("ifa")) {
 	delete sh;
 	delete shsp;
 	c.error_usage("No input set specified");
       }
-    
+      
       Test test;
       test.setSubgraphHeuristicOne(sh, algname);
       test.doConcatSubgraphs(!no_subgraph_concat);
@@ -188,7 +192,8 @@ int main(int argc, char *argv[]) {
       else
 	test.doTestESMT(verbose);
       if(outfile.size() > 0)
-	test.createDatFile(outfile);
+        test.createDatFile(outfile);
+      */
     }
     else {
       std::vector<Point> points;
@@ -215,7 +220,7 @@ int main(int argc, char *argv[]) {
       }
       
       ESMT esmt(points, sh, !no_subgraph_concat,
-		!no_post_optimise, redo_concat, verbose);
+		!no_post_optimise, redo_concat, use_bg, verbose);
       
       if(c.is_set("val")) {
 	if(Utils::validate(esmt))
