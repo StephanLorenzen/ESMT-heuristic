@@ -10,7 +10,7 @@
 #include "steiner/iterative.hpp"
 #include "steiner/utils/point.hpp"
 #include "steiner/utils/delaunay.hpp"
-#include "steiner/utils/priority_queue.hpp"
+#include "steiner/utils/heap.hpp"
 #include "steiner/utils/disjoint_set.hpp"
 #include "steiner/utils/bottleneck_graph/bg_naive.hpp"
 
@@ -201,9 +201,15 @@ private:
   void doConcatenateWithRedo(bool verbose = false);
 
   /**
-   * Checks if the given SteinerTree can be added, and adds it if so.
+   * Checks if the given SteinerTree can be added
    */
-  bool checkAndAdd(SteinerTree &st, std::vector< Utils::DisjointSet<unsigned int> > &sets, bool *flags);
+  bool concatCheck(SteinerTree &st, std::vector< Utils::DisjointSet<unsigned int> > &sets, bool *flags);
+  
+  /**
+   * Adds the given SteinerTree to the final solution.
+   * NOTE!!! Should only be called after concatCheck(...).
+   */
+  void concatAdd(SteinerTree &st, std::vector< Utils::DisjointSet<unsigned int> > &sets);
   
   /**
    * Performs after optimisation
@@ -348,7 +354,7 @@ private:
   std::vector<SteinerTree> smts;
 
   /** Priority queue for concatenation */
-  Utils::PriorityQueue<SteinerTree> queue;
+  Utils::Heap<SteinerTree> *queue;
 
   /** Map showing if the edge i1,i2 is in the MST,
       where i1, i2 is indexes in this->points. */

@@ -15,7 +15,7 @@
 #include "steiner/utils/utils.hpp"
 #include "steiner/utils/fermat.hpp"
 #include "steiner/utils/disjoint_set.hpp"
-//#include "steiner/utils/priority_queue.hpp"
+#include "steiner/utils/heap.hpp"
 #include "steiner/utils/delaunay.hpp"
 #include "steiner/utils/bottleneck_graph/bg_naive.hpp"
 
@@ -30,7 +30,7 @@ typedef Utils::DisjointSet<unsigned int>  DisjointSet;
 typedef Utils::Delaunay                   Delaunay;
 typedef Utils::Delaunay::Simplex          Simplex;
 typedef Utils::Delaunay::PointHandle      PointHandle;
-typedef Utils::PriorityQueue<SteinerTree> Queue;
+typedef Utils::Heap<SteinerTree>          Queue;
 
 /*
  * Constructor
@@ -296,18 +296,11 @@ void ESMT::findESMT(Delaunay &del,
 #endif
   }
   
-  // TODO - what is wrong here??? this->queue = Queue(this->smts, use_bg ? ESMT::compareSteinerBRatio : ESMT::compareSteinerRatio);
   // Sort priority queue of sub-graphs according to ratio
   if(use_bg)
-    std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerBRatio);
+    this->queue = new Queue(ESMT::compareSteinerBRatio, this->smts);
   else
-    std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerRatio);
-  
-  // Sort priority queue of sub-graphs according to ratio
-  //if(use_bg)
-  //  std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerBRatio);
-  //else
-  //std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerRatio);
+    this->queue = new Queue(ESMT::compareSteinerRatio, this->smts);
   
   /*if(special_concat) {
     // Starting concat
@@ -451,6 +444,7 @@ void ESMT::findESMT(Delaunay &del,
  * Destructor
  */
 ESMT::~ESMT() {
+  delete this->queue;
 }
 
 // Private functions
@@ -479,8 +473,9 @@ void ESMT::doConcatenate(bool verbose) {
   c = 1;
   i = 0;
   while(true) {
-    SteinerTree st = this->smts[i];//this->queue.next();
-    if(this->checkAndAdd(st,sets,flags)) {
+    SteinerTree &st = this->queue->extract();
+    if(this->concatCheck(st,sets,flags)) {
+      this->concatAdd(st,sets);
       c += st.n()-1;
       if(c >= this->n())
 	break;
@@ -512,26 +507,29 @@ void ESMT::doConcatenateWithBottleneck(bool verbose) {
     flags[i] = false;
   
   c = 1;
-  unsigned idx = 0;
-  //this->queue.rebuild();
   while(true) {
-    SteinerTree st = this->smts[idx];//this->queue.next();
-    if(this->checkAndAdd(st,sets,flags)) {
+    SteinerTree &st = this->queue->extract();
+    if(!this->concatCheck(st,sets,flags))
+      continue;
+    // We can insert this, but is it up to date?
+    // Try to recompute to find out
+    double old_Blen = st.getBMSTLength();
+    double new_Blen = this->bgraph->getBMSTLength(st.getPoints());
+    if(abs(old_Blen-new_Blen) < 0.000001) {
+      // It is up to date - insert
+      this->concatAdd(st,sets);
       c += st.n()-1;
       if(c >= this->n())
 	break;
-      // Recompute the queue
+      // Update B-graph
       this->bgraph->mergePoints(st.getPoints());
-      for(i = idx; i < this->smts.size(); i++) {
-	SteinerTree &st = this->smts[i];
-	st.setBMSTLength(this->bgraph->getBMSTLength(st.getPoints()));
-	st.computeRatios();
-      }
-      idx++;
-      std::sort(this->smts.begin()+idx, this->smts.end(), ESMT::compareSteinerBRatio);
     }
-    else
-      idx++;
+    else {
+      // Not up to date - update it and reinsert in Queue
+      st.setBMSTLength(new_Blen);
+      st.computeRatios();
+      this->queue->insert(st);
+    }
   }
   delete flags;
 }
@@ -540,26 +538,28 @@ void ESMT::doConcatenateWithRedo(bool verbose) {
 
 }
 
-bool ESMT::checkAndAdd(SteinerTree &st, std::vector<DisjointSet> &sets, bool *flags) {
+bool ESMT::concatCheck(SteinerTree &st, std::vector<DisjointSet> &sets, bool *flags) {
   unsigned int i;
-  //std::cout << st << std::endl;
   std::vector<unsigned int> flags_set;
   for(i = 0; i < st.n(); i++) {
     // id is the vertex index in the full graph
     unsigned int id = sets[st.pidx(i)].findSet()->getValue();
-    if(flags[id]) {
+    if(flags[id])
       // Not good, has been encountered before = same set
-      // Unset all flags and return
-      for(i = 0; i < flags_set.size(); i++)
-	flags[flags_set[i]] = false;
-      return false;
-    }
+      break;
     // Set flag
     flags[id] = true;
     flags_set.push_back(id);
   }
-  // No conflicts, this graph may be inserted without problem
-  
+  // Unset flags again
+  for(i = 0; i < flags_set.size(); i++)
+    flags[flags_set[i]] = false;
+  return i == st.n(); // If we made it to n -> no conflicts
+}
+
+void ESMT::concatAdd(SteinerTree &st, std::vector<DisjointSet> &sets) {
+  unsigned int i;
+
   // Add points
   std::vector<unsigned int> indexes = st.getPoints();
   for(i = 0; i < st.s(); i++) {
@@ -574,9 +574,11 @@ bool ESMT::checkAndAdd(SteinerTree &st, std::vector<DisjointSet> &sets, bool *fl
     this->edges.push_back(e);
   }
   // Now union all
-  // All points in flag_set should be unioned
-  for(i = 1; i < flags_set.size(); i++)
-    sets[flags_set[0]].setUnion(sets[flags_set[i]]);
+  unsigned int id, first = sets[st.pidx(0)].findSet()->getValue();
+  for(i = 1; i < st.n(); i++) {
+    id = sets[st.pidx(i)].findSet()->getValue();
+    sets[first].setUnion(sets[id]);
+  }
 
 #if(ESMT_COLLECT_STATS)
   while(this->stats.added_sub_trees.size() < st.n()+1)
@@ -584,145 +586,7 @@ bool ESMT::checkAndAdd(SteinerTree &st, std::vector<DisjointSet> &sets, bool *fl
   this->stats.added_sub_trees[st.n()]++;
   this->stats.add_sub_trees_total++;
 #endif
-
-  // Unset all flags and return
-  for(i = 0; i < flags_set.size(); i++)
-    flags[flags_set[i]] = false;
-  return true;
 }
-
-//void ESMT::doConcatenateB(bool verbose) {
-  /*unsigned int i, j, k, c, index;
-  // Concatenation process.
-  // This is really just MSTKruskal.
-
-  //std::cout << "Components: " << this->smts.size() << std::endl;
-  //std::cout << "Simplx: " << this->simplices->size() << std::endl;
-  
-  // Clear edges from Delaunay
-  this->edges.clear();
-
-  if(verbose) {
-    std::cout << "Starting B-concatenation process." << std::endl;
-  }  
-
-  c = 0;
-  // First, create Disjoint sets. Each set is build over vertex indicies
-  std::vector< DisjointSet > sets;
-  for(i = 0; i < this->points.size(); i++) {
-    sets.push_back(DisjointSet(i));
-  }
-  
-  // Flags used to determine if two sets are disjoint
-  bool *flags = new bool[this->N];
-  for(i = 0; i < this->N; i++)
-    flags[i] = false;
-  
-  std::vector<SubST> tsmts = this->smts;
-  bool done = false;
-  while(!done) {
-    for(j = 0; j < tsmts.size(); j++) {
-      //std::cout << j << ":"<<tsmts.size() << std::endl;
-      SubST &sit = tsmts[j];
-      std::vector<int> flags_set;
-      // Check for conflicts
-      for(i = 0; i < sit.n; i++) {
-	// id is the vertex index in the full graph
-	int id = sets[sit.map[i]].findSet()->getValue();
-	if(flags[id])
-	  // Not good, has been encountered before = same set
-	  break;
-	// Set flag
-	flags[id] = true;
-	flags_set.push_back(id);
-      }
-      // Reset flags
-      for(k = 0; k < flags_set.size(); k++) {
-	flags[flags_set[k]] = false;
-      }
-      if(i == sit.n) {
-	// No conflicts, this graph may be inserted without problem
-	SteinerTree *st = sit.st;
-  */
-	/*std::cout << "added: ";
-	for(int uu =0 ; uu < sit.n; uu++)
-	  std::cout << sit.map[uu] << " ";
-	std::cout << "smt="<<sit.st->getSMTLength()<< ", bmst="<<sit.bmst_length<<std::endl;
-	*/
-  /*	std::vector<Point> *points = st->getPointsPtr();
-	std::vector<Edge>  *edges  = st->getEdgesPtr();
-	std::vector<Point>::iterator pit;
-	std::vector<Edge>::iterator  eit;
-	unsigned int no_of_terminals = points->size();
-
-	// Add points
-	index = 0;
-	std::vector<int> indexes;
-	for(pit = points->begin(); pit != points->end(); pit++) {
-	  if(pit->isSteiner()) {
-	    no_of_terminals--;
-	    this->points.push_back(*pit);
-	    indexes.push_back(this->points.size()-1);
-	  }
-	  else
-	    indexes.push_back(sit.map[index++]);
-	}
-	// Add edges
-	for(eit = edges->begin(); eit != edges->end(); eit++) {
-	  Edge e(indexes[eit->i0],indexes[eit->i1]);
-	  this->edges.push_back(e);
-	}
-	// Now union all
-	// All points in flag_set should be unioned
-	for(i = 1; i < flags_set.size(); i++) {
-	  sets[flags_set[0]].setUnion(sets[flags_set[i]]);
-	}
-
-#if(ESMT_COLLECT_STATS)
-	while(this->stats.added_sub_trees.size() < no_of_terminals+1)
-	  this->stats.added_sub_trees.push_back(0);
-	this->stats.added_sub_trees[no_of_terminals]++;
-	this->stats.add_sub_trees_total++;
-#endif
-	
-	// Increment counter
-	c += no_of_terminals-1;
-	break;
-      }
-    }
-    // Check if we have added N-1 mst-edges
-    if(c == this->N-1) {
-      // Connected graph
-      break;
-    }
-    
-    // We have to update the priority queue
-    std::vector<SubST> newQueue(tsmts.begin()+j+1, tsmts.end());
-    // Update B-graph
-    SubST &sit = tsmts[j];
-    std::vector<unsigned int> idxs;
-    for(k = 0; k < sit.n; k++)
-      idxs.push_back(sit.map[k]);
-    this->bgraph->mergePoints(idxs);
-    for(k = 0; k < newQueue.size(); k++)
-      this->setBLength(newQueue[k]);
-    std::sort(newQueue.begin(), newQueue.end(), ESMT::compareSteinerBRatio);
-    tsmts = newQueue;
-  }
-
-  if(verbose) {
-    std::cout << "Concatenation done." << std::endl;
-#if(ESMT_COLLECT_STATS)
-    std::cout << "  Sub-trees added: " << std::endl;
-    for(i = 2; i < this->stats.added_sub_trees.size(); i++)
-      std::cout << "   [" << i << "]: "
-		<< this->stats.added_sub_trees[i] << std::endl;
-    std::cout << "   Total: " << this->stats.add_sub_trees_total << std::endl;
-#endif
-  }
-
-  delete flags;*/
-//}
 
 /* Implementation of postOptimisation() */
 void ESMT::postOptimisation() {

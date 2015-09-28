@@ -7,9 +7,9 @@
 
 namespace Utils {
   /**
+   * @class Disjoint Set
    * This class implements a disjoint set data structure, as described
    * in T. H. Cormens et al. (Introduction to Algorithms).
-   *
    */
   template <class T>
   class DisjointSet {
