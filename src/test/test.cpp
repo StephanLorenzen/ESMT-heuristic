@@ -28,7 +28,7 @@ typedef Test::Result      Result;
 
 Test::Test()
   : seed(0), max(100), min(-100),
-    loop_time(2), concat(false), po(true), sct(false),
+    loop_time(2), concat(false), po(true), sct(false), bgtype(0),
     collect_stats(false), do_delaunay(true),
     sh(NULL), mean_ratio(0.0), mean_time(0.0), no_of_bad_trees(0),
     no_of_suboptimal_trees(0)
@@ -70,6 +70,10 @@ void Test::doPostOptimise(bool po) {
 
 void Test::doUseSpecialConcat(bool sct) {
   this->sct = sct;
+}
+
+void Test::doUseBGraph(int type) {
+  this->bgtype = type;
 }
 
 void Test::doCollectStats(bool doCollect) {
@@ -270,33 +274,31 @@ void Test::subgraphAlgTest(int i, bool verbose) {
   std::vector<Point> points = this->sets[i].points;
 
   // Make all possible edges. Needed for mst calculation
-  std::vector<Edge> edges;
-  for(int j = 0; j < (int)points.size(); j++)
-    for(int k = 0; k < j; k++)
-      edges.push_back(Edge(j,k,Utils::length(points[j],points[k])));
-  Graph g(points, edges);
-  g = Utils::MSTKruskal(g);
-  SteinerTree *st = new SteinerTree();
-  
+  Graph g(points);
+  Utils::MSTKruskalMod(g, true);
+  g.setMSTLength(g.getLength());
+  SteinerTree st(g.getPoints(), g.getPointsRef(), g.getEdges());
+  SteinerTree s = st;
+
   start_time = getTime();
   do {
-    delete st;
-    st = this->sh->findSteinerPoints(g);
+    s = st;
+    this->sh->findSteinerPoints(s);
     iterations++;
   }
   while((end_time = getTime()) < start_time + this->loop_time);
   
+  s.setSMTLength(s.getLength());
+  s.computeRatios();
   Result res;
   res.time          = ((double)(end_time-start_time)) / iterations;
-  res.ratio         = st->getSteinerRatio();
+  res.ratio         = s.getSteinerRatio();
   this->mean_time  += res.time;
   this->mean_ratio += res.ratio;
   if(res.ratio*0.999999 > 1.0)
       this->no_of_bad_trees++;
 
   this->results.push_back(res);
-  
-  delete st;
 
   if(verbose)
     // Print result
@@ -316,7 +318,7 @@ void Test::ESMTTest(int i, bool verbose, bool method_verbose) {
     do {
       if(esmt)
 	delete esmt;
-      esmt = new ESMT(del, this->sh, this->concat, this->po, this->sct, method_verbose);
+      esmt = new ESMT(del, this->sh, this->concat, this->po, this->sct, this->bgtype, method_verbose);
       iterations++;
     }
     while((end_time = getTime()) < start_time + this->loop_time);
@@ -326,7 +328,7 @@ void Test::ESMTTest(int i, bool verbose, bool method_verbose) {
     do {
       if(esmt)
 	delete esmt;
-      esmt = new ESMT(points, this->sh, this->concat, this->po, this->sct, method_verbose);
+      esmt = new ESMT(points, this->sh, this->concat, this->po, this->sct, this->bgtype, method_verbose);
       iterations++;
       method_verbose = false;
     }
@@ -346,7 +348,7 @@ void Test::ESMTTest(int i, bool verbose, bool method_verbose) {
 
   this->results.push_back(res);
   delete esmt;
-
+  
   // Print result
   if(verbose)
     std::cout << " [ Test " << (i+1) << " | Time: " << res.time
@@ -368,11 +370,11 @@ void Test::addPointSet(int point_set, int dim, int no_of_points, int no_of_tests
     //Do Delaunay
     std::vector<Point> points = Generator::randomFloatPoints(max, min, no_of_tests+dim);
     Utils::Delaunay del(points);
-    for(i = 0; (int)i < no_of_tests && i < del.getSimplices()->size(); i++) {
+    for(i = 0; (int)i < no_of_tests && i < del.getSimplices().size(); i++) {
       Set set;
       set.name = "Simplex from Delaunay";
       for(j = 0; j < (unsigned int)dim+1; j++) {
-	Utils::Delaunay::Simplex s = (*del.getSimplices())[i];
+	Utils::Delaunay::Simplex s = del.getSimplices()[i];
 	set.points.push_back(points[s.map[j]]);
       }
       this->sets.push_back(set);
@@ -586,19 +588,17 @@ bool Test::compareRatio(const Result &res1, const Result &res2) {
 }
 
 bool Test::testTopology(SteinerTree &st1, SteinerTree &st2) {
-  std::vector<Point> points1 = st1.getPoints();
-  std::vector<Point> points2 = st2.getPoints();
-  if(points1.size() != points2.size())
+  if(st1.n() != st2.n())
     return false;
   
-  std::vector<Edge> edges1 = st1.getEdges();
-  std::vector<Edge> edges2 = st2.getEdges();
+  std::vector<Edge> &edges1 = st1.getEdges();
+  std::vector<Edge> &edges2 = st2.getEdges();
 
   if(edges1.size() != edges2.size())
     return false;
   
   int n = 0, n1 = 0, n2 = 0, c1, c2;
-  for(int i = 0; i < (int)points1.size(); i++) {
+  for(int i = 0; i < (int)st1.n(); i++) {
     c1 = 0;
     c2 = 0;
     for(int j = 0; j < (int)edges1.size(); j++) {
@@ -623,8 +623,8 @@ bool Test::testTopology(SteinerTree &st1, SteinerTree &st2) {
 
 bool Test::testTopoRec(SteinerTree &st1, SteinerTree &st2,
 		       int n1, int n2, int l1, int l2) {
-  std::vector<Edge>  *e1 = st1.getEdgesPtr();
-  std::vector<Edge>  *e2 = st2.getEdgesPtr();
+  std::vector<Edge> &e1 = st1.getEdges();
+  std::vector<Edge> &e2 = st2.getEdges();
   
   int e11, e12, e21, e22;
   e11 = -1;
@@ -632,32 +632,32 @@ bool Test::testTopoRec(SteinerTree &st1, SteinerTree &st2,
   e21 = -1;
   e22 = -1;
 
-  int e = e1->size();
+  int e = e1.size();
 
   for(int i = 0; i < e; i++) {
-    if((*e1)[i].i0 == n1 && (*e1)[i].i1 != l1) {
+    if(e1[i].i0 == n1 && e1[i].i1 != l1) {
       if(e11 < 0)
-	e11 = (*e1)[i].i1;
+	e11 = e1[i].i1;
       else
-	e12 = (*e1)[i].i1;
+	e12 = e1[i].i1;
     }
-    else if((*e1)[i].i1 == n1 && (*e1)[i].i0 != l1) {
+    else if(e1[i].i1 == n1 && e1[i].i0 != l1) {
       if(e11 < 0)
-	e11 = (*e1)[i].i0;
+	e11 = e1[i].i0;
       else
-	e12 = (*e1)[i].i0;
+	e12 = e1[i].i0;
     }
-    if((*e2)[i].i0 == n2 && (*e2)[i].i1 != l2) {
+    if(e2[i].i0 == n2 && e2[i].i1 != l2) {
       if(e21 < 0)
-	e21 = (*e2)[i].i1;
+	e21 = e2[i].i1;
       else
-	e22 = (*e2)[i].i1;
+	e22 = e2[i].i1;
     }
-    else if((*e2)[i].i1 == n2 && (*e2)[i].i0 != l2) {
+    else if(e2[i].i1 == n2 && e2[i].i0 != l2) {
       if(e21 < 0)
-	e21 = (*e2)[i].i0;
+	e21 = e2[i].i0;
       else
-	e22 = (*e2)[i].i0;
+	e22 = e2[i].i0;
     }
   }
   

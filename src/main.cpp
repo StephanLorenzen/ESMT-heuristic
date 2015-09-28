@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #include "libclap/clap.hpp"
-//#include "test/test.hpp"
+#include "test/test.hpp"
 #include "steiner/utils/delaunay.hpp"
 #include "steiner/utils/utils.hpp"
 #include "steiner/utils/point.hpp"
@@ -28,7 +28,7 @@ typedef Utils::Generator  Generator;
 
 int set_type_from_name(std::string &settype) {
   int t = -1;
-  /*  if(settype.compare(0, 20, "random") == 0)
+  if(settype.compare(0, 20, "random") == 0)
     t = TEST_POINT_SET_RANDOM_D;
   else if(settype.compare(0, 20, "simplex") == 0)
     t = TEST_POINT_SET_SIMPLEX;
@@ -38,7 +38,6 @@ int set_type_from_name(std::string &settype) {
     t = TEST_POINT_SET_GRID;
   else if(settype.compare(0, 20, "delaunay") == 0)
     t = TEST_POINT_SET_DELAUNAY_SIMPLICES;
-  */
   return t;
 }
 
@@ -74,7 +73,7 @@ int main(int argc, char *argv[]) {
   CLAP c(clap_config, argc, argv);
   
   if(c.is_set("testtopo")) {
-    /*std::cout << "Running topo test!" << std::endl;
+    std::cout << "Running topo test!" << std::endl;
     std::string name("Smith iterative");
     std::string resFile("/home/stephan/Desktop/result.dat");
     std::string path("../data/protein3D/W1.stp");
@@ -89,16 +88,14 @@ int main(int argc, char *argv[]) {
     
     Test test;
     std::cout << test.testTopology(e1,e2) << std::endl;
-    */
     return 0;
   }
   else if(c.is_set("counttest")) {
-    /*int d = c.get_int_param("counttest",0),
+    int d = c.get_int_param("counttest",0),
       n = c.get_int_param("counttest",1),
       seed = c.get_int_param("counttest",2);
     Test test;
     test.doTestESMTSpecial(d, n, seed);
-    */
     return 0;
   }
   else {
@@ -137,7 +134,7 @@ int main(int argc, char *argv[]) {
     }
     else if(p == 0) {      
       // Check that some set is added
-      /*if(!c.is_set("g") && !c.is_set("gn") && !c.is_set("if") && !c.is_set("ifa")) {
+      if(!c.is_set("g") && !c.is_set("gn") && !c.is_set("if") && !c.is_set("ifa")) {
 	delete sh;
 	delete shsp;
 	c.error_usage("No input set specified");
@@ -148,6 +145,7 @@ int main(int argc, char *argv[]) {
       test.doConcatSubgraphs(!no_subgraph_concat);
       test.doPostOptimise(!no_post_optimise);
       test.doUseSpecialConcat(redo_concat);
+      test.doUseBGraph(use_bg);
       test.inclDelaunay(!c.is_set("nd"));
       test.setLoopTime(c.is_set("lt") ? c.get_int_param("lt") : 0);
       test.setSeed(seed);
@@ -193,7 +191,6 @@ int main(int argc, char *argv[]) {
 	test.doTestESMT(verbose);
       if(outfile.size() > 0)
         test.createDatFile(outfile);
-      */
     }
     else {
       std::vector<Point> points;

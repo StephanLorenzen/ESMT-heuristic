@@ -44,6 +44,7 @@ public:
   void doConcatSubgraphs(bool concat=true);
   void doPostOptimise(bool po=true);
   void doUseSpecialConcat(bool sct=true);
+  void doUseBGraph(int type);
   void doCollectStats(bool doCollect=true);
   void inclDelaunay(bool doDelaunay);
   void setLoopTime(int sec);
@@ -89,6 +90,7 @@ private:
   bool concat;
   bool po;
   bool sct;
+  int bgtype;
   bool collect_stats;
   bool do_delaunay;
   double quartiles[5];

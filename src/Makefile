@@ -8,7 +8,7 @@ OBJECTS = $(subst cpp,o,$(wildcard *.cpp))
 OBJECTS+= $(subst cpp,o,$(wildcard steiner/*.cpp))
 OBJECTS+= $(subst cpp,o,$(wildcard steiner/*/*.cpp))
 OBJECTS+= $(subst cpp,o,$(wildcard steiner/*/*/*.cpp))
-#OBJECTS+= $(subst cpp,o,$(wildcard test/*.cpp))
+OBJECTS+= $(subst cpp,o,$(wildcard test/*.cpp))
 
 CFLAGS+= -std=c++11
 
