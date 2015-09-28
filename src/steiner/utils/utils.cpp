@@ -18,6 +18,16 @@ bool compareLength(const Edge &e1, const Edge &e2) {
   return e1.length < e2.length;
 }
 
+/*
+ * Get edges for a full graph with n nodes
+ */
+void getEdges(Graph &graph) {
+  std::vector<Edge> &edges = graph.getEdges();
+  edges.clear();
+  for(unsigned int i=0; i<graph.n(); i++)
+    for(unsigned int j=i+1; j<graph.n(); j++)
+      edges.push_back(Edge(i,j,Utils::length(graph.getPoint(i),graph.getPoint(j))));
+}
 
 /*
  * Implementation of Kruskal's MST algorithm
@@ -42,9 +52,11 @@ Graph Utils::MSTKruskal(std::vector<Point> &points) {
   return Utils::MSTKruskal(g);
 }
 
-void Utils::MSTKruskalMod(Graph &graph) {
+void Utils::MSTKruskalMod(Graph &graph, bool add_edges) {
   // Find resulting edges
   std::vector<Edge> res;
+  if(add_edges)
+    getEdges(graph);
   Utils::MSTKruskalEdges(graph, res);
   
   // Update edges
@@ -85,15 +97,14 @@ void Utils::MSTKruskalEdges(Graph &graph, std::vector<Edge> &res) {
 }
 
 double Utils::MSTLengthKruskal(std::vector<Point> &points) {
-  std::vector<Edge> edges;
-  for(unsigned int i=0; i<points.size(); i++)
-    for(unsigned int j=i+1; j<points.size(); j++)
-      edges.push_back(Edge(i,j,Utils::length(points[i],points[j])));
   Graph g(points);
-  // Set the new edges
-  g.getEdges() = edges;
+  return MSTLengthKruskal(g, true);
+}
+
+double Utils::MSTLengthKruskal(Graph &graph, bool add_edges) {
+  Graph g = graph;
   // Compute
-  Utils::MSTKruskalMod(g);
+  Utils::MSTKruskalMod(g, add_edges);
   return g.getLength();
 }
 
@@ -122,7 +133,7 @@ void validateRec(std::vector<Edge> &edges, std::vector<int> &pf,
 }
 
 bool Utils::validate(SteinerTree &st) {
-  unsigned int i, j, p = st.n(), sp = st.s();
+  unsigned int i, p = st.n(), sp = st.s();
   std::vector<Edge>  &edges  = st.getEdges();
   // No of edges check
   if(st.m() != edges.size()+1) {

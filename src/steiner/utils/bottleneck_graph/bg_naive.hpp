@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "steiner/graph.hpp"
 #include "steiner/utils/point.hpp"
 #include "steiner/utils/bottleneck_graph/bottleneck_graph.hpp"
 
@@ -16,7 +17,7 @@ typedef Utils::Point Point;
  */
 class BottleneckGraphNaive : public BottleneckGraph {
 public:
-  BottleneckGraphNaive(const std::vector<Point> &points);
+  BottleneckGraphNaive(Graph &g);
   ~BottleneckGraphNaive();
 
   /**
@@ -29,6 +30,8 @@ private:
    * Merges the two points indexed by i and j
    */
   void _mergePoints(const unsigned int i, const unsigned int j);
+
+  void _removeEdge(const unsigned int i, const unsigned int j);
 };
 
 #endif // BG_NAIVE_H

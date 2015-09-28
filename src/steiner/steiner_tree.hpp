@@ -65,6 +65,8 @@ public:
 
   void calculateSMTLength();
 
+  void computeRatios();
+
   /**
    * Getter for the Steiner ratio.
    *
@@ -98,7 +100,7 @@ public:
    *
    * @return   The length of this graph.
    */
-  double getLength();
+  double getLength(bool use_euclidean = true);
 
   SteinerTree &operator=(const SteinerTree&);
   

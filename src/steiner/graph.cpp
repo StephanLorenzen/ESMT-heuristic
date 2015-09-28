@@ -88,11 +88,13 @@ void Graph::calculateBMSTLength() {
 
 }
 
-double Graph::getLength() const {
+double Graph::getLength(bool use_euclidean) const {
   std::vector<Edge>::const_iterator it;
   double result = 0.0;
   for(it = this->edges.begin(); it != this->edges.end(); it++) {
-    result += Utils::length(this->getPoint(it->i0), this->getPoint(it->i1));
+    result += (use_euclidean
+	       ? Utils::length(this->getPoint(it->i0), this->getPoint(it->i1))
+	       : it->length);
   }
   return result;
 }

@@ -93,7 +93,7 @@ public:
    *
    * @return   The length of this graph.
    */
-  double getLength() const;
+  double getLength(bool use_euclidean = true) const;
 
   /**
    * Returns the dimension of this graph

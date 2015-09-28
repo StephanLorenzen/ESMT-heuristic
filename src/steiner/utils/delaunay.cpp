@@ -46,16 +46,12 @@ std::vector<Utils::Delaunay::PointHandle> &Utils::Delaunay::getPointHandles() {
 
 /* Implementation of getNumberOfFaces() */
 std::vector<unsigned int> Utils::Delaunay::getNumberOfFaces() {
-  int dim = this->dimension();
-  std::vector<unsigned int> cur_set, result(dim+2, 0);
-  std::unordered_map<unsigned long, bool> flag;
+  unsigned int dim = this->dimension();
+  std::vector<unsigned int> result(dim+2, 0);
   
-  std::vector<Simplex>::iterator sit;
-  for(sit = this->simplices.begin(); sit != this->simplices.end(); sit++)
-    this->findFaces(*sit, cur_set, flag, result);
-  
-  // Simplices
-  result[dim+1] = this->simplices.size();
+  this->findFaces();
+  for(unsigned int i=0; i<this->faces.size(); i++)
+    result[this->faces[i].n()]++;
 
   return result;
 }
@@ -200,13 +196,31 @@ void Utils::Delaunay::doParseOutputQHull() {
   }
 }
 
-/* Implementation of findFaces(...) */
-void Utils::Delaunay::findFaces(Simplex &simplex, std::vector<unsigned int> &cur_set,
-				std::unordered_map<unsigned long, bool> &flag,
-				std::vector<unsigned int> &result) {
-  unsigned int i, n, dim = this->dimension();
-  n = cur_set.size();
-  
+/* Implementation of findFaces() */
+std::vector<Graph> &Utils::Delaunay::findFaces() {
+  if(this->faces.size() == 0) {
+    std::vector<unsigned int> cur_set;
+    std::unordered_map<unsigned long, bool> flag;
+    
+    std::vector<Simplex>::iterator sit;
+    for(sit = this->simplices.begin(); sit != this->simplices.end(); sit++) {
+      // Add all faces of this simplex (if not added already)
+      this->findFacesRec(*sit, cur_set, flag);
+      // Add simplex
+      std::vector<Pidx> pidxs;
+      for(unsigned int i=0; i<sit->n; i++)
+	pidxs.push_back(sit->map[i]);
+      this->faces.push_back(Graph(pidxs, this->getPointsRef()));
+    }
+  }
+  return this->faces;
+}
+
+/* Implementation of findFacesRec(...) */
+void Utils::Delaunay::findFacesRec(Simplex &simplex, std::vector<unsigned int> &cur_set,
+				   std::unordered_map<unsigned long, bool> &flag) {
+  unsigned int i, n = cur_set.size(), dim = this->dimension();
+
   if(n >= 2 && n <= dim) {
     unsigned int bits = 64 / dim;
     unsigned long key = 0;
@@ -217,7 +231,7 @@ void Utils::Delaunay::findFaces(Simplex &simplex, std::vector<unsigned int> &cur
     if(flag.find(key) == flag.end()) {
       // Add subset.
       flag[key] = true;
-      result[n]++;
+      this->faces.push_back(Graph(cur_set, this->getPointsRef()));
     }
   }
   int last = n > 0 ? cur_set.back() : -1;
@@ -226,7 +240,7 @@ void Utils::Delaunay::findFaces(Simplex &simplex, std::vector<unsigned int> &cur
     if(simplex.map[i] > last) {
       std::vector<unsigned int> new_set = cur_set;
       new_set.push_back(simplex.map[i]);
-      this->findFaces(simplex, new_set, flag, result);
+      this->findFacesRec(simplex, new_set, flag);
     }
   }
 }

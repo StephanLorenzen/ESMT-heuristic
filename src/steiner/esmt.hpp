@@ -10,6 +10,8 @@
 #include "steiner/iterative.hpp"
 #include "steiner/utils/point.hpp"
 #include "steiner/utils/delaunay.hpp"
+#include "steiner/utils/priority_queue.hpp"
+#include "steiner/utils/disjoint_set.hpp"
 #include "steiner/utils/bottleneck_graph/bg_naive.hpp"
 
 // Bottleneck Graph - allowed values
@@ -113,76 +115,6 @@ public:
    */
   ESMT::Stats *getStats();
   
-  /////////////////////////////////////////////////////
-  // SubST structure
-  
-  /**
-   * Internal structure for use in the ESMT algorithm.
-   *
-   * Stores a map of the points in the given subset and a simplex_index,
-   * if the subset is a complete simplex.
-   */
-  struct Subset {
-    Subset();
-    
-    std::vector<int> map;
-    unsigned int simplex_index;
-  };
-
-  /**
-   * Internal structure for use in the ESMT algorithm.
-   *
-   * Stores a Steiner tree pointer and a map of indexes into
-   * the complete point set.
-   */
-  struct SubST {
-    /**
-     * Constructor.
-     *
-     * @param st       A pointer to the Steiner tree.
-     * @param n        Number of terminals in st
-     * @param map      A map of indexes into the complete point set (size n).
-     */
-    SubST(SteinerTree *st, int n, int *map);
-    
-    /**
-     * Constructor.
-     * Constructs a SubST for a SteinerTree with n+1 terminals.
-     * Adds nidx to the map, leaving map with a size of n+1.
-     *
-     * @param st       A pointer to the Steiner tree.
-     * @param n        Number of terminals in st - 1
-     * @param map      A map of indexes into the complete point set (size n).
-     * @param nidx     The index of the newly added terminal in st.
-     */
-    SubST(SteinerTree *st, int n, int *map, int nidx);
-
-    /**
-     * Copy constructor.
-     *
-     * @param s   The SubST struct to copy.
-     */
-    SubST(const SubST &s);
-
-    /**
-     * Destructor
-     */
-    ~SubST();    
-    /**
-     * Assignment operator.
-     */
-    SubST &operator=(const SubST &other);
-
-    /** The Steiner tree (pointer). */
-    SteinerTree *st;
-    /** Number of terminals */
-    unsigned int n;
-    /** The index map. */
-    int *map;
-    /** bmst length */
-    double bmst_length;
-  };
-
   /**
    * Getter for the list of covered faces.
    *
@@ -245,32 +177,33 @@ private:
   
   /**
    * Performs the concatenation step of the algorithm.
-   * Assumes this->smts to contain all sub-trees in order by ratio.
+   * Assumes this->queue to contain all sub-trees in order by ratio.
    *
-   * @param verbose  If true, stats will be printed
+   * @param verbose       If true, stats will be printed
    */
   void doConcatenate(bool verbose = false);
 
   /**
-   * Performs the concatenation step of the algorithm.
-   * Assumes this->smts to contain all sub-trees in order by ratio.
-   * Sub-STs to be added before this->smts may be stores in
-   * pre_add_list
-   *
-   * @param pre_add_list  All trees stored in this list will be
-   *                      added (if possible) before this->smts.
-   * @param verbose       If true, stats will be printed
-   */
-  void doConcatenate(std::vector<SteinerTree> &pre_add_list, bool verbose = false);
-
-  /**
    * Performs the concatenation step of the algorithm, using the given bottleneck graph
    * for MST lengths.
-   * Assumes that this->smts to initially contain all sub-trees in order by b-ratio.
+   * Assumes that this->queue contains all sub-trees in order by b-ratio.
    * 
    * @param verbose       If true, stats will be printed
    */
-  void doConcatenateB(bool verbose = false);
+  void doConcatenateWithBottleneck(bool verbose = false);
+  
+  /**
+   * Performs the concatenation step of the algorithm repeatedly, using the redo technic.
+   * Assumes that this->queue contains all sub-trees in order by ratio.
+   * 
+   * @param verbose       If true, stats will be printed
+   */
+  void doConcatenateWithRedo(bool verbose = false);
+
+  /**
+   * Checks if the given SteinerTree can be added, and adds it if so.
+   */
+  bool checkAndAdd(SteinerTree &st, std::vector< Utils::DisjointSet<unsigned int> > &sets, bool *flags);
   
   /**
    * Performs after optimisation
@@ -280,14 +213,6 @@ private:
    *
    */
   void postOptimisation();
-
-  /**
-   * Builds an MST in g from the given Subset using the isInMST method.
-   *
-   * @param subset  The subset of points to construct the MST for.
-   * @param g       The graph to build the MST in.
-   */
-  void buildMST(Subset &subset, Graph &g);
   
   /**
    * The findFaces procedure finds all covered (MST) faces from the Delaunay
@@ -328,21 +253,8 @@ private:
 			   unsigned int prev,
 			   unsigned int bound);
   
-  /**
-   * The findAllFaces procedure finds all faces from the Delaunay
-   * triangulation, which contains the given point.
-   * These faces will be placed in components.
-   * The procedure will leave out faces, which cross simplex boundaries and
-   * which contains points with a lower index.
-   *
-   * @param simplex
-   * @param subset
-   * @param flag
-   */
-  void findAllFaces(Utils::Delaunay::Simplex &simplex,
-		    ESMT::Subset &subset,
-		    std::unordered_map<unsigned long, bool> &flag);
-  
+  void findAllFaces(Utils::Delaunay &del);
+
   /**
    * Builds sausages recursively.
    *
@@ -356,14 +268,14 @@ private:
    * @param c                    The number of needed connections in MST for next
    *                             point.
    */
-  void buildSausage(std::vector<int> &prevSet,
+  /*void buildSausage(std::vector<int> &prevSet,
 		    ESMT::SubST &prevTree,
 		    unsigned int added,
 		    unsigned int next_simplex_index,
 		    int cur_simplex,
 		    int org_simplex,
 		    unsigned int c);
-
+  */
   /**
    * Builds sausages recursively in the other direction.
    *
@@ -376,13 +288,13 @@ private:
    * @param next_simplex_index   Neighbouring index of next simplex for cur_simplex.
    * @param cur_simplex          Index of current simplex in simplices.
    */
-  void buildSausageReverse(std::vector<int> &prevSet,
+  /*void buildSausageReverse(std::vector<int> &prevSet,
 			   ESMT::SubST &prevTree,
 			   unsigned int prev_added,
 			   unsigned int added,
 			   unsigned int next_simplex_index,
 			   int cur_simplex);
-
+  */
   /**
    * Checks if the edge between i0 and i1 is in the MST.
    *
@@ -393,7 +305,7 @@ private:
    */
   bool isInMST(int i0, int i1);
 
-  void setBLength(SubST &subst);
+  void setBLength(SteinerTree &st);
 
   ////////////////////////////////////////////////
   // Static functions
@@ -434,6 +346,9 @@ private:
   
   /** List of SMTs for concatenation */
   std::vector<SteinerTree> smts;
+
+  /** Priority queue for concatenation */
+  Utils::PriorityQueue<SteinerTree> queue;
 
   /** Map showing if the edge i1,i2 is in the MST,
       where i1, i2 is indexes in this->points. */

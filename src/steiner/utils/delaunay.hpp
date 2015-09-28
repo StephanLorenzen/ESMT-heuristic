@@ -92,6 +92,11 @@ namespace Utils {
      * Stats: Count all faces
      */
     std::vector<unsigned int> getNumberOfFaces();
+    
+    /**
+     * Finds all faces in the structure
+     */
+    std::vector<Graph> &findFaces();
 
   protected:
   private:
@@ -117,20 +122,21 @@ namespace Utils {
     /**
      * Recursive procedure for finding all faces
      */
-    void findFaces(Simplex &simplex, std::vector<unsigned int> &cur_set,
-		   std::unordered_map<unsigned long, bool> &flag,
-		   std::vector<unsigned int> &result);
+    void findFacesRec(Simplex &simplex, std::vector<unsigned int> &cur_set,
+		      std::unordered_map<unsigned long, bool> &flag);
 
     /** The list of simplices */
-    std::vector<Simplex>      simplices;
+    std::vector<Simplex>     simplices;
+    /** The list of faces */
+    std::vector<Graph>       faces;
     /** The list of point handles */
-    std::vector<PointHandle>  point_handles;
+    std::vector<PointHandle> point_handles;
 
-	/** qdelaunay input file name */
-	std::string qdelaunay_input;
-
-	/** qdelaunay output file name */
-	std::string qdelaunay_output;
+    /** qdelaunay input file name */
+    std::string qdelaunay_input;
+    
+    /** qdelaunay output file name */
+    std::string qdelaunay_output;
   };
 
 }

@@ -25,10 +25,11 @@ namespace Utils {
   Graph MSTKruskal(Graph &graph);
   Graph MSTKruskal(std::vector<Point> &points);
   
-  void MSTKruskalMod(Graph &graph);
+  void MSTKruskalMod(Graph &graph, bool add_edges = false);
   void MSTKruskalEdges(Graph &graph, std::vector<Edge> &edges);
   
   double MSTLengthKruskal(std::vector<Point> &points);
+  double MSTLengthKruskal(Graph &graph, bool add_edges = false);
   
   /**
    * Gets a random number between 0 and 1

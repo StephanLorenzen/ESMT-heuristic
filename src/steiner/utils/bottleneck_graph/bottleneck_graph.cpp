@@ -11,32 +11,28 @@ typedef Utils::Edge  Edge;
 /*
  * Implementation of BottleneckGraph constructor
  */
-BottleneckGraph::BottleneckGraph(const std::vector<Point> &points) : connections(points.size()), edges(points.size()-1) {
+BottleneckGraph::BottleneckGraph(Graph &g)
+  : points(g.getPointsRef()), connections(g.n()), edges(g.n()-1)
+{
   // Compute MST
-  this->points = points;
-  Graph g(this->points);
-  Graph mst = Utils::MSTKruskal(g);
+  std::vector<Edge> edges;
+  Utils::MSTKruskalEdges(g, edges);
   
   // Setup connection lists
-  std::vector<Edge> edges = mst.getEdges();
   for(unsigned int i=0; i<edges.size(); i++) {
     int i0 = edges[i].i0, i1 = edges[i].i1;
-    this->connections[i0].push_back(i1);
-    this->connections[i1].push_back(i0);
+    this->connections[i0].push_back(i);
+    this->connections[i1].push_back(i);
     this->edges[i].p = i0 < i1 ? i0 : i1;
     this->edges[i].q = i0 < i1 ? i1 : i0;
     this->edges[i].dist = edges[i].length;
   }
-
   // Setup bottleneck distance array
   bdist = new unsigned int*[points.size()];
   for(unsigned int i=0; i<this->points.size(); i++)
     bdist[i] = new unsigned int[points.size()];
  
-  std::vector<unsigned int> ps;
-  for(unsigned int i=0; i<this->points.size(); i++)
-    ps.push_back(i);
-  this->_recompute(ps);
+  this->_recompute();
 }
 
 /*
@@ -57,7 +53,25 @@ double BottleneckGraph::distance(const unsigned int i, const unsigned int j) {
     a = j;
     b = i;
   }
-  return bdist[a][b];
+  if(this->edges[bdist[a][b]].dist == -1)
+    std::cout << "______________________";
+  return this->edges[bdist[a][b]].dist;
+}
+
+/*
+ * Implementation of BottleneckGraph::getBMSTLength(...)
+ */
+double BottleneckGraph::getBMSTLength(std::vector<unsigned int> &pointIdxs) {
+  unsigned int i, j;
+  Graph g(pointIdxs, this->points);
+  for(i = 0; i < g.n(); i++) {
+    //std::cout << i << "("<<pointIdxs[i]<<") ";
+    for(j = i+1; j < g.n(); j++)
+      g.getEdges().push_back(Edge(i, j, this->distance(g.pidx(i),g.pidx(j))));
+  }
+  //std::cout<< std::endl;
+  Utils::MSTKruskalMod(g);
+  return g.getLength(false);
 }
 
 /*
@@ -80,16 +94,25 @@ double BottleneckGraph::distance(const unsigned int i, const unsigned int j) {
  * Implementation of BottleneckGraph::_recompute()
  */
 void BottleneckGraph::_recompute() {
-    // Calculate bottleneck tree
+  // Calculate bottleneck tree
   for(unsigned int i=0; i<this->points.size(); i++)
     this->_traverse(i,i,0,0);
+
+  /*for(unsigned int i=0; i < this->edges.size(); i++)
+    std::cout << i << ": ("<<this->edges[i].p<<","<<this->edges[i].q<<") l=" << edges[i].dist <<"\n";
+  for(int i = 0; i < this->connections.size(); i++) {
+    std::cout << i << " --> ";
+    for(int j = 0; j < this->connections[i].size(); j++) {
+      std::cout << this->connections[i][j] << " ";
+    }
+    std::cout << std::endl;
+    }*/
 }
 
 /*
  * Implementation of BottleneckGraph::_recompute(...)
  */
 void BottleneckGraph::_recompute(std::vector<unsigned int> &points) {
-  //std::sort(points);
   // Calculate bottleneck tree
   for(unsigned int i=0; i<points.size(); i++)
     this->_traverse(points[i],points[i],0,0);
@@ -104,9 +127,10 @@ void BottleneckGraph::_traverse(const unsigned int p, const unsigned int cur,
   if(p < cur)
     // Update bottleneck dist for this point
     bdist[p][cur] = mEdge;
-
+  
   std::vector<unsigned int> &conn = this->connections[cur];
-  for(unsigned int nextEdge = 0; nextEdge<conn.size(); nextEdge++) {
+  for(unsigned int i = 0; i<conn.size(); i++) {
+    unsigned int nextEdge = conn[i];
     if(p == cur || nextEdge != prevEdge) {
       // Get edge
       _edge &e = this->edges[nextEdge];

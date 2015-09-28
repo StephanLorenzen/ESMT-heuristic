@@ -15,6 +15,7 @@
 #include "steiner/utils/utils.hpp"
 #include "steiner/utils/fermat.hpp"
 #include "steiner/utils/disjoint_set.hpp"
+//#include "steiner/utils/priority_queue.hpp"
 #include "steiner/utils/delaunay.hpp"
 #include "steiner/utils/bottleneck_graph/bg_naive.hpp"
 
@@ -23,12 +24,13 @@
 /*
  * Utils type definitions
  */
-typedef Utils::Point                     Point;
-typedef Utils::Edge                      Edge;
-typedef Utils::DisjointSet<unsigned int> DisjointSet;
-typedef Utils::Delaunay                  Delaunay;
-typedef Utils::Delaunay::Simplex         Simplex;
-typedef Utils::Delaunay::PointHandle     PointHandle;
+typedef Utils::Point                      Point;
+typedef Utils::Edge                       Edge;
+typedef Utils::DisjointSet<unsigned int>  DisjointSet;
+typedef Utils::Delaunay                   Delaunay;
+typedef Utils::Delaunay::Simplex          Simplex;
+typedef Utils::Delaunay::PointHandle      PointHandle;
+typedef Utils::PriorityQueue<SteinerTree> Queue;
 
 /*
  * Constructor
@@ -108,14 +110,14 @@ void ESMT::findESMT(Delaunay &del,
 		    bool special_concat,
 		    unsigned int use_bg,
 		    bool verbose) {
-  unsigned int i,j,c,bits;
+  unsigned int i,bits;
   this->bgraph = NULL;
   
   assert(sh);
   this->dim = del.dimension();
   this->N = this->n();
   
-  /*if(use_bg) {
+  if(use_bg) {
     // Don't do special concat if use_bg
     special_concat = false;
     // Check that there are not too many points:
@@ -131,7 +133,7 @@ void ESMT::findESMT(Delaunay &del,
     }
     
     this->bgraph = new BottleneckGraphNaive(del);
-    }*/
+  }
   this->edges              = del.getEdges();
   this->simplices          = del.getSimplices();
   this->is_covered_simplex = std::vector<bool>(this->simplices.size(), false);
@@ -179,7 +181,7 @@ void ESMT::findESMT(Delaunay &del,
   }
   
   // 2. Generate faces
-  if(false && use_bg) {
+  //if(false && use_bg) {
     // We have to find all faces
     /*std::unordered_map<unsigned long,bool> flags;
     std::vector<Simplex>::iterator sit;
@@ -204,7 +206,9 @@ void ESMT::findESMT(Delaunay &del,
       ed.map.push_back(e.i1);
       this->components.push_back(ed);
       }*/
-  }
+  if(use_bg)
+    // Find all faces
+    this->findAllFaces(del);
   else
     // Only find covered faces
     this->findCoveredFaces(handles, connections);
@@ -218,14 +222,6 @@ void ESMT::findESMT(Delaunay &del,
 		<< this->stats.covered_faces[i] << std::endl;
 #endif
   }
-
-  /*for(int t =0 ; t < this->components.size(); t++) {
-    std::cout << t<<", c-size="<<this->components[t].n() << ": ";
-    for(int k =0; k<this->components[t].n(); k++) {
-      std::cout << this->components[t].pidx(k) << " ";
-    }
-    std::cout << std::endl;
-    }*/
   
   // We now have a list of all faces (or only those covered by the MST, if not use_bg).
   // Begin finding small SMTs.
@@ -241,15 +237,14 @@ void ESMT::findESMT(Delaunay &del,
       double l = st.getLength();
       st.setMSTLength(l);
       st.setSMTLength(l);
-      //std::cout << st << std::endl;
-      
-      //SubST subst(st,sit->map.size(),&sit->map[0]);
-      //if(use_bg)
-      //	this->setBLength(subst);
+      st.setBMSTLength(l);
+      st.computeRatios();
       this->smts.push_back(st);
     }
     else {
-      // Assume use_bg = false for now
+      if(use_bg)
+	// First compute MST
+	Utils::MSTKruskalMod(*sit, true);
       SteinerTree st(sit->getPoints(), sit->getPointsRef(), sit->getEdges());
       st.setMSTLength(st.getLength());
       
@@ -258,28 +253,16 @@ void ESMT::findESMT(Delaunay &del,
       else
 	sh->findSteinerPoints(st);
       
-      if(st.getSteinerRatio() >= 1.0) {
-	/*std::cout << "del: ";
-	for(int uu =0 ; uu < sit->map.size(); uu++)
-	  std::cout << sit->map[uu] << " ";
-	std::cout <<std::endl<< "len,mst = "<<st->getLength() << " " << st->getMSTLength() << std::endl;
-	*/
+      st.setSMTLength(st.getLength());
+      st.computeRatios();
+      
+      if(st.getSteinerRatio() >= 1.0)
 	continue;
-      }
-      //SubST subst(st,sit->map.size(),&sit->map[0]);
-      //if(use_bg)
-      //this->setBLength(subst);
-      //std::cout << "subst: ";
-      //for(int uu = 0; uu < sit->map.size(); uu++)
-      //std::cout << sit->map[uu] << " ";
-      /*std::cout << "found: ";
-	for(int uu =0 ; uu < subst.n; uu++)
-	  std::cout << subst.map[uu] << " ";
-      std::cout <<std::endl<< "len,bmst = "<<subst.st->getLength() << " " << subst.bmst_length << std::endl;
-      *//*std::cout << "subst vals: ";
-      for(int uu = 0; uu < sit->map.size(); uu++)
-	std::cout << this->bgraph->distance(sit->map[uu],sit->map[(uu+1)%sit->map.size()]) << " ";
-	std::cout << std::endl;*/
+
+      if(use_bg)
+	st.setBMSTLength(this->bgraph->getBMSTLength(st.getPoints()));
+      st.computeRatios();
+      
       this->smts.push_back(st);
       // TODO disable sauages for now
       /*if(false && sit->map.size() == this->dim+1 && concat_subgraphs) {
@@ -313,11 +296,18 @@ void ESMT::findESMT(Delaunay &del,
 #endif
   }
   
+  // TODO - what is wrong here??? this->queue = Queue(this->smts, use_bg ? ESMT::compareSteinerBRatio : ESMT::compareSteinerRatio);
+  // Sort priority queue of sub-graphs according to ratio
+  if(use_bg)
+    std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerBRatio);
+  else
+    std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerRatio);
+  
   // Sort priority queue of sub-graphs according to ratio
   //if(use_bg)
   //  std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerBRatio);
   //else
-  std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerRatio);
+  //std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerRatio);
   
   /*if(special_concat) {
     // Starting concat
@@ -398,14 +388,17 @@ void ESMT::findESMT(Delaunay &del,
   else if(use_bg) {
     this->doConcatenateB(verbose);
   }
-  else {*/
-    // Simple one-time concat
+  else {}*/
+  if(use_bg)
+    this->doConcatenateWithBottleneck(verbose);
+  else
     this->doConcatenate(verbose);
-    //}
-    this->setSMTLength(this->getLength());
+    
+  this->setSMTLength(this->getLength());
+  this->computeRatios();
 
 #if(ESMT_COLLECT_STATS)
-  this->stats.no_of_sp = this->points.size()-this->N;
+  this->stats.no_of_sp = this->s;
 #endif
 
   /*if(post_optimise) {
@@ -450,50 +443,29 @@ void ESMT::findESMT(Delaunay &del,
     }
     }*/
   
-  //if(use_bg)
-  //  delete this->bgraph;
+  if(use_bg)
+    delete this->bgraph;
 }
 
 /*
  * Destructor
  */
 ESMT::~ESMT() {
-  // Do clean-up of components
-  /*std::vector<SubST>::iterator stit;
-  for(stit = this->smts.begin(); stit != this->smts.end(); stit++) {
-    delete stit->st;
-    }*/
 }
 
 // Private functions
 
-/*
- * Performs the concatenation step of the algorithm.
- */
 void ESMT::doConcatenate(bool verbose) {
-  std::vector<SteinerTree> dummy;
-  this->doConcatenate(dummy, verbose);
-}
-
-/*
- * Performs the concatenation step of the algorithm.
- */
-void ESMT::doConcatenate(std::vector<SteinerTree> &pre_add_list, bool verbose) {
-  unsigned int i, j, c, index;
+  unsigned int i, c;
   // Concatenation process.
   // This is really just MSTKruskal.
 
-  //std::cout << "Components: " << this->smts.size() << std::endl;
-  //std::cout << "Simplx: " << this->simplices->size() << std::endl;
-  
   // Clear edges from Delaunay
   this->edges.clear();
+  
+  if(verbose)
+    std::cout << "Starting concatenation process." << std::endl;  
 
-  if(verbose) {
-    std::cout << "Starting concatenation process." << std::endl;
-  }  
-
-  c = 0;
   // First, create Disjoint sets. Each set is build over vertex indicies
   std::vector< DisjointSet > sets;
   for(i = 0; i < this->n(); i++)
@@ -504,88 +476,122 @@ void ESMT::doConcatenate(std::vector<SteinerTree> &pre_add_list, bool verbose) {
   for(i = 0; i < this->N; i++)
     flags[i] = false;
 
-  std::vector<SteinerTree>::iterator sit;
-  for(sit = pre_add_list.begin(); sit != this->smts.end(); ++sit) {
-    // If we are done with pre_add_list -> start on smts
-    if(sit == pre_add_list.end())
-      sit = this->smts.begin();
-    // Check all terminals from sub-tree. If any of them has same set ->
-    // Bad join
-
-    // Indexes is a map of the graph vertices to the full graph vertices
-    // indexes[j] is the index of vertice j in the big graph
-    //std::vector<int> indexes = sit->map;
-    // A list of all flags set. Used for fast clean-up
-    std::vector<unsigned int> flags_set;
-    for(i = 0; i < sit->n(); i++) {
-      // id is the vertex index in the full graph
-      unsigned int id = sets[sit->pidx(i)].findSet()->getValue();
-      if(flags[id])
-	// Not good, has been encountered before = same set
-	break;
-      // Set flag
-      flags[id] = true;
-      flags_set.push_back(id);
-    }
-    if(i == sit->n()) {	
-      // No conflicts, this graph may be inserted without problem
-      std::vector<Edge>  edges  = sit->getEdges();
-      std::vector<Edge>::iterator  eit;
-      unsigned int no_of_terminals = sit->n();
-
-      // Add points
-      index = 0;
-      std::vector<unsigned int> indexes = sit->getPoints();
-      for(j = 0; j < sit->s(); j++) {
-	this->steiner_points.push_back(sit->getSteinerPoint(j));
-	indexes.push_back(this->m()-1);
-      }
-      // Add edges
-      for(eit = edges.begin(); eit != edges.end(); eit++) {
-	Edge e(indexes[eit->i0],indexes[eit->i1]);
-	this->edges.push_back(e);
-      }
-      // Now union all
-      // All points in flag_set should be unioned
-      for(i = 1; i < flags_set.size(); i++)
-	sets[flags_set[0]].setUnion(sets[flags_set[i]]);
-
-#if(ESMT_COLLECT_STATS)
-      while(this->stats.added_sub_trees.size() < no_of_terminals+1)
-	this->stats.added_sub_trees.push_back(0);
-      this->stats.added_sub_trees[no_of_terminals]++;
-      this->stats.add_sub_trees_total++;
-#endif
-
-      // Increment counter
-      c += no_of_terminals-1;
-      // Check if we have added N-1 mst-edges
-      if(c == this->N-1)
-	// Connected graph
+  c = 1;
+  i = 0;
+  while(true) {
+    SteinerTree st = this->smts[i];//this->queue.next();
+    if(this->checkAndAdd(st,sets,flags)) {
+      c += st.n()-1;
+      if(c >= this->n())
 	break;
     }
-
-    // Reset flags
-    for(i = 0; i < flags_set.size(); i++) {
-      flags[flags_set[i]] = false;
-    }
+    i++;
   }
-
-  if(verbose) {
-    std::cout << "Concatenation done." << std::endl;
-#if(ESMT_COLLECT_STATS)
-    std::cout << "  Sub-trees added: " << std::endl;
-    for(i = 2; i < this->stats.added_sub_trees.size(); i++)
-      std::cout << "   [" << i << "]: "
-		<< this->stats.added_sub_trees[i] << std::endl;
-    std::cout << "   Total: " << this->stats.add_sub_trees_total << std::endl;
-#endif
-  }
-
+  
   delete flags;
 }
 
-void ESMT::doConcatenateB(bool verbose) {
+void ESMT::doConcatenateWithBottleneck(bool verbose) {
+  unsigned int i, c;
+  // Concatenation process.
+  // This is really just MSTKruskal.
+
+  // Clear edges from Delaunay
+  this->edges.clear();
+  
+  if(verbose)
+    std::cout << "Starting concatenation process." << std::endl;  
+  // First, create Disjoint sets. Each set is build over vertex indicies
+  std::vector< DisjointSet > sets;
+  for(i = 0; i < this->n(); i++)
+    sets.push_back(DisjointSet(i));
+
+  // Flags used to determine if two sets are disjoint
+  bool *flags = new bool[this->N];
+  for(i = 0; i < this->N; i++)
+    flags[i] = false;
+  
+  c = 1;
+  unsigned idx = 0;
+  //this->queue.rebuild();
+  while(true) {
+    SteinerTree st = this->smts[idx];//this->queue.next();
+    if(this->checkAndAdd(st,sets,flags)) {
+      c += st.n()-1;
+      if(c >= this->n())
+	break;
+      // Recompute the queue
+      this->bgraph->mergePoints(st.getPoints());
+      for(i = idx; i < this->smts.size(); i++) {
+	SteinerTree &st = this->smts[i];
+	st.setBMSTLength(this->bgraph->getBMSTLength(st.getPoints()));
+	st.computeRatios();
+      }
+      idx++;
+      std::sort(this->smts.begin()+idx, this->smts.end(), ESMT::compareSteinerBRatio);
+    }
+    else
+      idx++;
+  }
+  delete flags;
+}
+
+void ESMT::doConcatenateWithRedo(bool verbose) {
+
+}
+
+bool ESMT::checkAndAdd(SteinerTree &st, std::vector<DisjointSet> &sets, bool *flags) {
+  unsigned int i;
+  //std::cout << st << std::endl;
+  std::vector<unsigned int> flags_set;
+  for(i = 0; i < st.n(); i++) {
+    // id is the vertex index in the full graph
+    unsigned int id = sets[st.pidx(i)].findSet()->getValue();
+    if(flags[id]) {
+      // Not good, has been encountered before = same set
+      // Unset all flags and return
+      for(i = 0; i < flags_set.size(); i++)
+	flags[flags_set[i]] = false;
+      return false;
+    }
+    // Set flag
+    flags[id] = true;
+    flags_set.push_back(id);
+  }
+  // No conflicts, this graph may be inserted without problem
+  
+  // Add points
+  std::vector<unsigned int> indexes = st.getPoints();
+  for(i = 0; i < st.s(); i++) {
+    this->steiner_points.push_back(st.getSteinerPoint(i));
+    indexes.push_back(this->m()-1);
+  }
+  // Add edges
+  std::vector<Edge> edges = st.getEdges();
+  std::vector<Edge>::iterator eit;
+  for(eit = edges.begin(); eit != edges.end(); eit++) {
+    Edge e(indexes[eit->i0],indexes[eit->i1]);
+    this->edges.push_back(e);
+  }
+  // Now union all
+  // All points in flag_set should be unioned
+  for(i = 1; i < flags_set.size(); i++)
+    sets[flags_set[0]].setUnion(sets[flags_set[i]]);
+
+#if(ESMT_COLLECT_STATS)
+  while(this->stats.added_sub_trees.size() < st.n()+1)
+    this->stats.added_sub_trees.push_back(0);
+  this->stats.added_sub_trees[st.n()]++;
+  this->stats.add_sub_trees_total++;
+#endif
+
+  // Unset all flags and return
+  for(i = 0; i < flags_set.size(); i++)
+    flags[flags_set[i]] = false;
+  return true;
+}
+
+//void ESMT::doConcatenateB(bool verbose) {
   /*unsigned int i, j, k, c, index;
   // Concatenation process.
   // This is really just MSTKruskal.
@@ -716,7 +722,7 @@ void ESMT::doConcatenateB(bool verbose) {
   }
 
   delete flags;*/
-}
+//}
 
 /* Implementation of postOptimisation() */
 void ESMT::postOptimisation() {
@@ -846,19 +852,15 @@ void ESMT::postOptimisation() {
 }
 
 bool ESMT::compareSteinerRatio(const SteinerTree &st1, const SteinerTree &st2) {
-  double r1 = st1.getSteinerRatio();
-  double r2 = st2.getSteinerRatio();
   if(st1.n() == 2 && st2.n() == 2)
     return st1.getMSTLength() < st2.getMSTLength();
-  return r1 < r2;
+  return st1.getSteinerRatio() < st2.getSteinerRatio();
 }
 
 bool ESMT::compareSteinerBRatio(const SteinerTree &st1, const SteinerTree &st2) {
-  double r1 = st1.getBSteinerRatio();
-  double r2 = st2.getBSteinerRatio();
   if(st1.n() == 2 && st2.n() == 2)
     return st1.getMSTLength() < st2.getMSTLength();
-  return r1 < r2;
+  return st1.getBSteinerRatio() < st2.getBSteinerRatio();
 }
 
 bool ESMT::compareLength(Edge e1, Edge e2) {
@@ -869,25 +871,23 @@ bool ESMT::isInMST(int i0, int i1) {
   return (this->in_MST.find(Edge::key(i0,i1)) != this->in_MST.end());
 }
 
-void ESMT::setBLength(SubST &subst) {
-  /*  unsigned int i, j;
-  std::vector<Point> points(subst.n);
+void ESMT::setBLength(SteinerTree &s) {
+  unsigned int i, j;
   std::vector<Edge> edges;
-  for(i = 0; i < subst.n; i++) {
+  for(i = 0; i < s.n(); i++) {
     for(j = 0; j < i; j++) {
-      edges.push_back(Edge(i,j,this->bgraph->distance(subst.map[i],subst.map[j])));
+      edges.push_back(Edge(i,j,this->bgraph->distance(s.pidx(i),s.pidx(j))));
     }
   }
-  Graph g(points, edges);
-  Graph mst = Utils::MSTKruskal(g);
-  std::vector<Edge> bedges = mst.getEdges();
-  subst.bmst_length = 0.0;
-  for(i = 0; i < bedges.size(); i++) {
-    subst.bmst_length += bedges[i].length;
-    }*/
+  Graph g(s.getPoints(), s.getPointsRef(), edges);
+  Utils::MSTKruskalMod(g, false);
+  double bmst_length = 0.0;
+  for(i = 0; i < edges.size(); i++) {
+    bmst_length += edges[i].length;
+  }
+  s.setBMSTLength(bmst_length);
 }
-
-void ESMT::buildMST(Subset &subset, Graph &g) {
+//void ESMT::buildMST(Subset &subset, Graph &g) {
   /*std::vector<Point> *points = g.getPointsPtr();
   std::vector<Edge>  *edges  = g.getEdgesPtr();
   points->clear();
@@ -905,12 +905,12 @@ void ESMT::buildMST(Subset &subset, Graph &g) {
     }
   }
   g.setMSTLength(g.getLength());*/
-}
+//}
 
 void ESMT::findCoveredFaces(std::vector< PointHandle > &handles,
 			    std::vector< std::vector<int> > &connections) {
 
-  unsigned int i, p, r, n, next;
+  unsigned int i, p;
   std::unordered_map<unsigned int, unsigned int> map;
   bool *flag = new bool[this->n()];
   for(i = 0; i < this->n(); i++)
@@ -940,7 +940,7 @@ void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
 			       unsigned int cur,
 			       unsigned int prev,
 			       unsigned int bound) {
-  unsigned int c, n, i, j, rank, next;
+  unsigned int c, i, j, rank, next;
   std::vector<int> intersection;
   
   if(cur != bound) {
@@ -996,45 +996,32 @@ void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
   }
 }
 
-void ESMT::findAllFaces(Simplex &simplex, ESMT::Subset &subset,
-			std::unordered_map<unsigned long,bool> &flag) {
-  /*  unsigned int i, n;
-  n = subset.map.size();
-  if(n > 2 && n < this->dim+1) {
-    unsigned int bits = 64 / this->dim;
-    unsigned long key = 0;
-    for(i = 0; i < n; i++)
-      key += (subset.map[i] << (bits*i));
-    if(flag.find(key) == flag.end()) {
-      // Add subset.
-      flag[key] = true;
-      this->components.push_back(subset);
-#if(ESMT_COLLECT_STATS)
-      while(this->stats.faces.size() < n-1)
-	this->stats.faces.push_back(0);
-      this->stats.faces[n-2]++;
-#endif
-    }
+void ESMT::findAllFaces(Delaunay &del) {
+  unsigned int i;
+  std::vector<Graph> &faces = del.findFaces();
+  
+  this->components.clear();
+  this->components.reserve(faces.size());
+  for(i=0; i<faces.size(); i++)
+    if(faces[i].n() > 2)
+      this->components.push_back(faces[i]);
+  // Get only MST edges
+  for(i=0; i<this->edges.size(); i++) {
+    std::vector<Pidx> pidxs;
+    pidxs.push_back(this->edges[i].i0);
+    pidxs.push_back(this->edges[i].i1);
+    this->components.push_back(Graph(pidxs, this->getPointsRef()));
   }
-  int last = subset.map.back();
-  for(i = 0; i < simplex.n; i++) {
-    // Add only larger than
-    if(simplex.map[i] > last) {
-      Subset newSet = subset;
-      newSet.map.push_back(simplex.map[i]);
-      this->findAllFaces(simplex, newSet, flag);
-    }
-    }*/
 }
 
-void ESMT::buildSausage(std::vector<int> &prevSet,
+/*void ESMT::buildSausage(std::vector<int> &prevSet,
 			SubST &prevTree,
 			unsigned int added,
 			unsigned int next_simplex_index,
 			int cur_simplex,
 			int org_simplex,
 			unsigned int c) {
-  /*unsigned int i, j, z;
+  unsigned int i, j, z;
   double d_mst_length = 0.0;
 
   Simplex *cur  = &(*this->simplices)[cur_simplex];
@@ -1124,16 +1111,16 @@ void ESMT::buildSausage(std::vector<int> &prevSet,
 	break;
     // j is now index of the next connection
     this->buildSausageReverse(curSet, subst, added, 0, j, org_simplex);
-    }*/
-}
+    }
+}*/
 
-void ESMT::buildSausageReverse(std::vector<int> &prevSet,
+/*void ESMT::buildSausageReverse(std::vector<int> &prevSet,
 			       SubST &prevTree,
 			       unsigned int prev_added,
 			       unsigned int added,
 			       unsigned int next_simplex_index,
 			       int cur_simplex) {
-  /*unsigned int i, j, z, c;
+  unsigned int i, j, z, c;
   double d_mst_length = 0.0;
   Simplex *cur  = &(*this->simplices)[cur_simplex];
   int next_vertex = cur->nextVertex[next_simplex_index];
@@ -1206,65 +1193,8 @@ void ESMT::buildSausageReverse(std::vector<int> &prevSet,
     // Now, next vertex is in next->nextVertex[j]. Recursive call now
     // if next simplex is less than bound.
     this->buildSausageReverse(curSet, subst, prev_added, added, j, next_simplex);
-    }*/
-}
-
-/////////////////////////////////////////
-// Struct functions
-
-/* Subset constructor */
-ESMT::Subset::Subset() {
-  this->simplex_index = -1;
-}
-
-/* Subset assignment operator */
-ESMT::SubST &ESMT::SubST::operator=(const ESMT::SubST &other) {
-  if(this != &other) {
-    delete this->map;
-
-    this->n = other.n;
-    this->map = new int[n];
-    for(unsigned int i = 0; i < n; i++)
-      this->map[i] = other.map[i];
-    this->st = other.st;
-    this->bmst_length = other.bmst_length;
-  }
-  return *this;
-}
-
-/* SubST constructor */
-ESMT::SubST::SubST(SteinerTree *st, int n, int *map) {
-  this->n   = n;
-  this->st  = st;
-  this->map = new int[n];
-  for(int i = 0; i < n; i++)
-    this->map[i] = map[i];
-}
-
-/* SubST constructor */
-ESMT::SubST::SubST(SteinerTree *st, int n, int *map, int nidx) {
-  this->n   = n+1;
-  this->st  = st;
-  this->map = new int[n+1];
-  for(int i = 0; i < n; i++)
-    this->map[i] = map[i];
-  this->map[n] = nidx;
-}
-
-/* SubST copy constructor */
-ESMT::SubST::SubST(const ESMT::SubST &s) {
-  this->n   = s.n;
-  this->st  = s.st;
-  this->bmst_length = s.bmst_length;
-  this->map = new int[s.n];
-  for(unsigned int i = 0; i < n; i++)
-    this->map[i] = s.map[i];
-}
-
-/* SubST destructor */
-ESMT::SubST::~SubST() {
-  delete this->map;
-}
+    }
+}*/
 
 /* Stats constructor */
 ESMT::Stats::Stats() {

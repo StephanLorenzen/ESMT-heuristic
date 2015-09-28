@@ -18,7 +18,7 @@ public:
    * Constructor.
    * Constructs the initial BottleneckGraph
    */
-  BottleneckGraph(const std::vector<Point> &points);
+  BottleneckGraph(Graph &g);
   
   /**
    * Destructor
@@ -29,6 +29,11 @@ public:
    * Gets the Bottleneck distance between points indexed by i and j
    */
   double distance(const unsigned int i, const unsigned int j);
+  
+  /**
+   * Gets the Bottleneck Minimum Spanning Tree length for a set of points
+   */
+  double getBMSTLength(std::vector<unsigned int> &points);
   
 protected:
   /**
@@ -52,7 +57,7 @@ protected:
     unsigned int p, q;
   };
 
-  std::vector<Point> points;
+  std::vector<Point> &points;
   unsigned int** bdist;
   std::vector< std::vector<unsigned int> > connections;
   std::vector<_edge> edges;
