@@ -8,84 +8,73 @@
  */
 BottleneckGraphNaive::BottleneckGraphNaive(Graph &g)
   : BottleneckGraph(g) {
-  /*for(int i = 0; i < points.size(); i++) {
-    std::cout << i << ":";
-    for(int j = i+1; j < points.size(); j++) {
-      std::cout << " " << this->bdist[i][j];
-    }
-    std::cout << std::endl;
-    }*/
+  // Setup bottleneck distance array
+  bdist = new int*[points.size()];
+  for(unsigned int i=0; i<this->points.size(); i++)
+    bdist[i] = new int[points.size()];
+
+  // Initial computation
+  this->_recompute();
 }
 
 /*
  * Implementation of BottleneckGraphNaive destructor
  */
-BottleneckGraphNaive::~BottleneckGraphNaive() { }
+BottleneckGraphNaive::~BottleneckGraphNaive() {
+  for(unsigned int i=0; i<this->points.size(); i++)
+    delete bdist[i];
+  delete bdist;
+}
 
 /*
  * Implementation of BottleneckGraphNaive::mergePoints(...)
  */
 void BottleneckGraphNaive::mergePoints(const std::vector<unsigned int> &points) {
-  if(points.size() < 2)
-    return;
-  
-  for(unsigned int i=0; i<points.size(); i++)
-    for(unsigned int j=i+1; j<points.size(); j++)
-      this->_removeEdge(points[i],points[j]);
-  
-  for(unsigned int i=1; i<points.size(); i++)
-    this->_mergePoints(points[i-1], points[i]);
-  //std::cout << "Recompute now..." << std::endl;
-  
+  BottleneckGraph::mergePoints(points);
+  // Do the recompute
   this->_recompute();
 }
 
-/*
- * Implementation of BottleneckGraphNaive::_mergePoints(...)
+/**
+ * Implementation of BottleneckGraphNaive::_getEdgeIndex(...)
  */
-void BottleneckGraphNaive::_mergePoints(const unsigned int i, const unsigned int j) {
-  unsigned int p = i, q = j;
+unsigned int BottleneckGraphNaive::_getEdgeIndex(const unsigned int i, const unsigned int j) {
+  unsigned int a = i, b = j;
   if(i > j) {
-    p = j;
-    q = i;
+    a = j;
+    b = i;
   }
-  //std::cout << "merge: "<<p << "," << q << std::endl;
-  // To merge two points, we simply add a zero edge between them.
-  BottleneckGraph::_edge nedge;
-  nedge.dist = 0.0;
-  nedge.p    = p;
-  nedge.q    = q;
-  this->edges.push_back(nedge);
-  //std::cout << " added: "<<this->edges.size()-1 << std::endl;
-  this->connections[p].push_back(this->edges.size()-1);
-  this->connections[q].push_back(this->edges.size()-1);
+  // Assumed to always be valid
+  return this->bdist[a][b];
 }
 
 /*
- * Implementation of BottleneckGraphNaive::_removeEdge(...)
+ * Implementation of BottleneckGraph::_recompute()
  */
-void BottleneckGraphNaive::_removeEdge(const unsigned int i, const unsigned int j) {
-  //std::cout << "remove: " << i << "," << j << std::endl;
-  unsigned int p = i, q = j;
-  if(i > j) {
-    p = j;
-    q = i;
-  }
-  // Remove the bottleneck edge.
-  unsigned int bde = this->bdist[p][q];
-  //std::cout << "edge: "<<bde << std::endl;
-  BottleneckGraph::_edge &bedge = this->edges[bde];
-  bedge.dist = -1;
-  std::vector<unsigned int> newConnsP, newConnsQ;
-  std::vector<unsigned int> oldConnsP = this->connections[bedge.p];
-  std::vector<unsigned int> oldConnsQ = this->connections[bedge.q];
-  for(unsigned int i=0; i<oldConnsP.size(); i++)
-    if(oldConnsP[i]!=bde)
-      newConnsP.push_back(oldConnsP[i]);
-  for(unsigned int i=0; i<oldConnsQ.size(); i++)
-    if(oldConnsQ[i]!=bde)
-      newConnsQ.push_back(oldConnsQ[i]);
-  this->connections[bedge.p] = newConnsP;
-  this->connections[bedge.q] = newConnsQ;
+void BottleneckGraphNaive::_recompute() {
+  // Calculate bottleneck tree
+  for(unsigned int i=0; i<this->points.size(); i++)
+    this->_traverse(i,i,0,0);
+}
 
+/*
+ * Implementation of BottleneckGraph::_traverse(...)
+ */
+void BottleneckGraphNaive::_traverse(const unsigned int p, const unsigned int cur,
+				     const unsigned int prevEdge, const unsigned int mEdge) {
+  double carry = this->edges[mEdge].dist;
+  if(p < cur)
+    // Update bottleneck dist for this point
+    this->bdist[p][cur] = mEdge;
+  
+  std::vector<unsigned int> &conn = this->connections[cur];
+  for(unsigned int i = 0; i<conn.size(); i++) {
+    unsigned int nextEdge = conn[i];
+    if(p == cur || nextEdge != prevEdge) {
+      // Get edge
+      BottleneckGraph::_edge &e = this->edges[nextEdge];
+      unsigned int next = cur == e.p ? e.q : e.p;
+      this->_traverse(p, next, nextEdge, e.dist > carry ? nextEdge : mEdge);
+    }
+  }
 }

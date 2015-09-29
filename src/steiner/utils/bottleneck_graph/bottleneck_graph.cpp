@@ -1,4 +1,5 @@
 #include <vector>
+#include <algorithm>
 
 #include "steiner/graph.hpp"
 #include "steiner/utils/utils.hpp"
@@ -27,33 +28,18 @@ BottleneckGraph::BottleneckGraph(Graph &g)
     this->edges[i].q = i0 < i1 ? i1 : i0;
     this->edges[i].dist = edges[i].length;
   }
-  // Setup bottleneck distance array
-  bdist = new unsigned int*[points.size()];
-  for(unsigned int i=0; i<this->points.size(); i++)
-    bdist[i] = new unsigned int[points.size()];
- 
-  this->_recompute();
 }
 
 /*
  * Implementation of BottleneckGraph destructor
  */
-BottleneckGraph::~BottleneckGraph() {
-  for(unsigned int i=0; i<this->points.size(); i++)
-    delete bdist[i];
-  delete bdist;
-}
+BottleneckGraph::~BottleneckGraph() { }
 
-/*
+/**
  * Implementation of BottleneckGraph::distance(...)
  */
 double BottleneckGraph::distance(const unsigned int i, const unsigned int j) {
-  unsigned int a = i, b = j;
-  if(i > j) {
-    a = j;
-    b = i;
-  }
-  return this->edges[bdist[a][b]].dist;
+  return this->edges[this->_getEdgeIndex(i,j)].dist;
 }
 
 /*
@@ -70,58 +56,60 @@ double BottleneckGraph::getBMSTLength(std::vector<unsigned int> &pointIdxs) {
   return g.getLength(false);
 }
 
-/*
+/**
+ * Implementation of BottleneckGraph::setBMSTLength(...)
+ */
+void BottleneckGraph::setBMSTLength(Graph &g) {
+  g.setBMSTLength(this->getBMSTLength(g.getPoints()));
+}
+
+/**
  * Implementation of BottleneckGraph::mergePoints(...)
  */
-//void BottleneckGraph::mergePoints(const std::vector<Point> &points) {
+void BottleneckGraph::mergePoints(const std::vector<unsigned int> &points) {
+  if(points.size() < 2)
+    return;
   
-//}
+  // Remove the bottleneck edges
+  for(unsigned int i=0; i<points.size(); i++)
+    for(unsigned int j=i+1; j<points.size(); j++)
+      this->_removeEdge(points[i],points[j]);
+  
+  // Merge the points together
+  for(unsigned int i=1; i<points.size(); i++)
+    this->_mergePoints(points[i-1], points[i]);
+}
 
-/*
+/**
+ * Implementation of BottleneckGraph::_removeEdge(...)
+ */
+void BottleneckGraph::_removeEdge(const unsigned int i, const unsigned int j) {
+  unsigned int e = this->_getEdgeIndex(i,j);
+  
+  // Might be removed already
+  _edge &edge = this->edges[e];
+  if(edge.dist == 0.0)
+    // Already removed or merge edge
+    return;
+  edge.dist = 0.0;
+
+  // Remove from cons lists
+  std::vector<unsigned int> &connsP = this->connections[edge.p];
+  std::vector<unsigned int> &connsQ = this->connections[edge.q];
+  connsP.erase(std::remove(connsP.begin(), connsP.end(), e), connsP.end());
+  connsQ.erase(std::remove(connsQ.begin(), connsQ.end(), e), connsQ.end());
+}
+
+/**
  * Implementation of BottleneckGraph::_mergePoints(...)
  */
-//unsigned int BottleneckGraph::_mergePoints(const unsigned int i, const unsigned int j) {
-  
-  
-//  return 0;
-//}
-
-/*
- * Implementation of BottleneckGraph::_recompute()
- */
-void BottleneckGraph::_recompute() {
-  // Calculate bottleneck tree
-  for(unsigned int i=0; i<this->points.size(); i++)
-    this->_traverse(i,i,0,0);
-}
-
-/*
- * Implementation of BottleneckGraph::_recompute(...)
- */
-void BottleneckGraph::_recompute(std::vector<unsigned int> &points) {
-  // Calculate bottleneck tree
-  for(unsigned int i=0; i<points.size(); i++)
-    this->_traverse(points[i],points[i],0,0);
-}
-
-/*
- * Implementation of BottleneckGraph::_traverse(...)
- */
-void BottleneckGraph::_traverse(const unsigned int p, const unsigned int cur,
-	       const unsigned int prevEdge, const unsigned int mEdge) {
-  double carry = this->edges[mEdge].dist;
-  if(p < cur)
-    // Update bottleneck dist for this point
-    bdist[p][cur] = mEdge;
-  
-  std::vector<unsigned int> &conn = this->connections[cur];
-  for(unsigned int i = 0; i<conn.size(); i++) {
-    unsigned int nextEdge = conn[i];
-    if(p == cur || nextEdge != prevEdge) {
-      // Get edge
-      _edge &e = this->edges[nextEdge];
-      unsigned int next = cur == e.p ? e.q : e.p;
-      this->_traverse(p, next, nextEdge, e.dist > carry ? nextEdge : mEdge);
-    }
-  }
+void BottleneckGraph::_mergePoints(const unsigned int i, const unsigned int j) {
+  // To merge two points, we simply add a zero edge between them.
+  BottleneckGraph::_edge nedge;
+  nedge.dist = 0.0;
+  nedge.p    = i;
+  nedge.q    = j;
+  this->edges.push_back(nedge);
+  this->connections[i].push_back(this->edges.size()-1);
+  this->connections[j].push_back(this->edges.size()-1);
 }

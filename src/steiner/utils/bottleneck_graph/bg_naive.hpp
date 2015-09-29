@@ -17,21 +17,47 @@ typedef Utils::Point Point;
  */
 class BottleneckGraphNaive : public BottleneckGraph {
 public:
+  /**
+   * Constructor.
+   * Constructs the initial BottleneckGraph
+   *
+   * @param g   The graph to construct the Bottleneck Graph for.
+   */
   BottleneckGraphNaive(Graph &g);
+  
+  /**
+   * Destructor
+   */
   ~BottleneckGraphNaive();
 
   /**
    * Merges all of the points in the given vector, and recomputes the Bottleneck Graph
    */
   void mergePoints(const std::vector<unsigned int> &points);
+
 protected:
 private:
   /**
-   * Merges the two points indexed by i and j
+   * Get the index in this->edges of the bottleneck edge for the two given points
+   *
+   * @param i  The first point
+   * @param j  The second point
    */
-  void _mergePoints(const unsigned int i, const unsigned int j);
+  unsigned int _getEdgeIndex(const unsigned int i, const unsigned int j);
+  
+  /**
+   * Recomputes all bottleneck distances.
+   */
+  void _recompute();
+  
+  /**
+   * Traverses the tree to find the Bottleneck distance for a single point p.
+   */
+  void _traverse(const unsigned int p, const unsigned int cur,
+		 const unsigned int prevEdge, const unsigned int mEdge);
 
-  void _removeEdge(const unsigned int i, const unsigned int j);
+  /** Stores the bottleneck distances */
+  int** bdist;
 };
 
 #endif // BG_NAIVE_H
