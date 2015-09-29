@@ -49,7 +49,7 @@ unsigned int BottleneckGraphNaive::_getEdgeIndex(const unsigned int i, const uns
 }
 
 /*
- * Implementation of BottleneckGraph::_recompute()
+ * Implementation of BottleneckGraphNaive::_recompute()
  */
 void BottleneckGraphNaive::_recompute() {
   // Calculate bottleneck tree
@@ -58,7 +58,7 @@ void BottleneckGraphNaive::_recompute() {
 }
 
 /*
- * Implementation of BottleneckGraph::_traverse(...)
+ * Implementation of BottleneckGraphNaive::_traverse(...)
  */
 void BottleneckGraphNaive::_traverse(const unsigned int p, const unsigned int cur,
 				     const unsigned int prevEdge, const unsigned int mEdge) {

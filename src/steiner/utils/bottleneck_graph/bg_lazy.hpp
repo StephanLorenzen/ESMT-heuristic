@@ -1,5 +1,5 @@
-#ifndef BG_NAIVE_H
-#define BG_NAIVE_H
+#ifndef BG_LAZY_H
+#define BG_LAZY_H
 
 #include <vector>
 
@@ -10,12 +10,12 @@
 typedef Utils::Point Point;
 
 /**
- * @class BottleneckGraphNaive
+ * @class BottleneckGraphLazy
  *
- * Implements a naive version of the Bottleneck Graph.
- * Each time a set of points are merged, the entire graph will be recomputed.
+ * Implements a lazy version of the Bottleneck Graph.
+ * Bottleneck distances are calculated (and stored) when needed.
  */
-class BottleneckGraphNaive : public BottleneckGraph {
+class BottleneckGraphLazy : public BottleneckGraph {
 public:
   /**
    * Constructor.
@@ -23,12 +23,12 @@ public:
    *
    * @param g   The graph to construct the Bottleneck Graph for.
    */
-  BottleneckGraphNaive(Graph &g);
-  
+  BottleneckGraphLazy(Graph &g);
+
   /**
    * Destructor
    */
-  ~BottleneckGraphNaive();
+  ~BottleneckGraphLazy();
 
   /**
    * Merges all of the points in the given vector, and recomputes the Bottleneck Graph
@@ -36,7 +36,6 @@ public:
    * @param points  The points (indicies) to be merged
    */
   void mergePoints(const std::vector<unsigned int> &points);
-
 protected:
 private:
   /**
@@ -48,18 +47,23 @@ private:
   unsigned int _getEdgeIndex(const unsigned int i, const unsigned int j);
   
   /**
-   * Recomputes all bottleneck distances.
+   * Recomputes the bottleneck distance between i and j.
    */
-  void _recompute();
+  void _recompute(const unsigned int i, const unsigned int j);
   
   /**
    * Traverses the tree to find the Bottleneck distance for a single point p.
    */
   void _traverse(const unsigned int p, const unsigned int cur,
 		 const unsigned int prevEdge, const unsigned int mEdge);
+  
+  /**
+   * Computes the key into this->bdist, for an edge (i,j), i < j
+   */
+  unsigned long _key(const unsigned int i, const unsigned int j);
 
   /** Stores the bottleneck distances */
-  int** bdist;
+  std::unordered_map<unsigned long, unsigned int> bdist;
 };
 
-#endif // BG_NAIVE_H
+#endif // BG_LAZY_H

@@ -12,11 +12,12 @@
 #include "steiner/utils/delaunay.hpp"
 #include "steiner/utils/heap.hpp"
 #include "steiner/utils/disjoint_set.hpp"
-#include "steiner/utils/bottleneck_graph/bg_naive.hpp"
+#include "steiner/utils/bottleneck_graph/bottleneck_graph.hpp"
 
 // Bottleneck Graph - allowed values
-#define BOTTLENECK_GRAPH_NONE  0
-#define BOTTLENECK_GRAPH_NAIVE 1
+#define BOTTLENECK_GRAPH_NONE   0
+#define BOTTLENECK_GRAPH_NAIVE  1
+#define BOTTLENECK_GRAPH_LAZY   2
 
 /**
  * @class ESMT
@@ -370,7 +371,7 @@ private:
   IterativeSmith iterSmith;
 
   /** BottleneckGraph object */
-  BottleneckGraphNaive *bgraph;
+  BottleneckGraph *bgraph;
 };
 
 #endif // ESMT_H
