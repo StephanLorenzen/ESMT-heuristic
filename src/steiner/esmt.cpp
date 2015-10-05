@@ -282,91 +282,18 @@ void ESMT::findESMT(Delaunay &del,
   else
     this->queue = new Queue(ESMT::compareSteinerRatio, this->smts);
   
-  /*if(special_concat) {
-    // Starting concat
-    this->doConcatenate(false);
-    std::vector<SubST> non_covered;
-    // Preprocessing: find SMTs of all non_covered
-    std::vector< Simplex >::iterator spit;
-    for(i = 0, spit = this->simplices->begin();
-	spit != this->simplices->end(); i++, spit++) {
-      if(this->is_covered_simplex[i])
-	// Simplex is covered. Continue
-	continue;
-      // All is of size = d+1 (since only simplices)
-      Graph submst;
-      for(i = 0; i < spit->n; i++) {
-	submst.getPoints().push_back(this->points[spit->map[i]]);
-	for(j = i+1; j < spit->n; j++) {
-	  int a = spit->map[i];
-	  int b = spit->map[j];
-	  submst.getEdgesPtr()->push_back(Edge(i,j,Utils::length(this->points[a],this->points[b])));
-	}
-      }
-
-      submst = Utils::MSTKruskal(submst);
-      submst.setMSTLength(submst.getLength());
-
-      SteinerTree *st;
-      if(spit->n == 3)
-	st = Utils::getFermatSMT(submst);
-      else
-	st = sh->findSteinerPoints(submst);
-      if(st->getSteinerRatio() >= 1.0) {
-	delete st;
-	continue;
-      }
-      SubST subst(st,spit->n,spit->map);
-      non_covered.push_back(subst);
-    }
-
-    std::sort(non_covered.begin(), non_covered.end(), ESMT::compareSteinerRatio);
-
-    // Now, redo concatenation
-    std::vector<SubST> pre_add;
-    double best_ratio = this->getSteinerRatio();
-    unsigned int k = 1000; // Maximum of max(1000,non_covered.size()) tries
-    if(verbose)
-      std::cout << "Ratio after initial concatenation: "
-		<< best_ratio << std::endl;
-    for(i = 0; i < k && i < non_covered.size(); i++) {
-      pre_add.push_back(non_covered[i]);
-      // Now try to concatenate again.
-      this->points.erase(this->points.begin()+this->N, this->points.end());
-      this->doConcatenate(pre_add, false);
-      this->setSMTLength(-1);
-      this->setSteinerRatio(-1);
-      if(this->getSteinerRatio() < best_ratio) {
-	if(verbose)
-	  std::cout << "Better ratio achieved: " << this->getSteinerRatio()
-		    << std::endl;
-	best_ratio = this->getSteinerRatio();
-      }
-      else {
-	// Remove this FST from pre_add again.
-	pre_add.pop_back();
-      }
-    }
-
 #if(ESMT_COLLECT_STATS)
-    this->stats.added_sub_trees.clear();
-    this->stats.add_sub_trees_total = 0;
+  this->stats.added_sub_trees.clear();
+  this->stats.add_sub_trees_total = 0;
 #endif
 
-    this->points.erase(this->points.begin()+this->N, this->points.end());
-    this->doConcatenate(pre_add, verbose);
-    this->setSMTLength(-1);
-    this->setSteinerRatio(-1);
-  }
-  else if(use_bg) {
-    this->doConcatenateB(verbose);
-  }
-  else {}*/
   if(use_bg)
     this->doConcatenateWithBottleneck(verbose);
+  else if(special_concat)
+    this->doConcatenateWithRedo(*sh, verbose);
   else
     this->doConcatenate(verbose);
-    
+  
   this->setSMTLength(this->getLength());
   this->computeRatios();
 
@@ -429,6 +356,9 @@ ESMT::~ESMT() {
 
 // Private functions
 
+/*
+ * Implementation of ESMT::doConcatenate(...)
+ */
 void ESMT::doConcatenate(bool verbose) {
   unsigned int i, c;
   // Concatenation process.
@@ -466,6 +396,9 @@ void ESMT::doConcatenate(bool verbose) {
   delete flags;
 }
 
+/*
+ * Implementation of ESMT::doConcatenateWithBottleneck(...)
+ */
 void ESMT::doConcatenateWithBottleneck(bool verbose) {
   unsigned int i, c;
   // Concatenation process.
@@ -514,10 +447,127 @@ void ESMT::doConcatenateWithBottleneck(bool verbose) {
   delete flags;
 }
 
-void ESMT::doConcatenateWithRedo(bool verbose) {
+/*
+ * Implementation of ESMT::doConcatenateWithRedo(...)
+ */
+void ESMT::doConcatenateWithRedo(SubgraphHeuristic &sh, bool verbose) {
+  unsigned int i, j, c, k;
+  
+  // Initial concat
+  this->doConcatenate(false);
+  // Get non-covered simplices
+  std::vector<SteinerTree> non_covered_list;
+  std::vector< Simplex >::iterator spit;
+  for(i = 0, spit = this->simplices.begin();
+      spit != this->simplices.end(); i++, spit++) {
+    if(this->is_covered_simplex[i])
+      // Simplex is covered. Continue
+      continue;
+    // All is of size = d+1 (since only simplices)
+    // Get MST
+    std::vector<unsigned int> points;
+    for(j = 0; j < spit->n; j++)
+      points.push_back(spit->map[j]);
+    SteinerTree st(points, this->getPointsRef());
+    Utils::MSTKruskalMod(st, true);
+    st.setMSTLength(st.getLength());
+    
+    if(spit->n == 3)
+      Utils::getFermatSMT(st);
+    else
+      sh.findSteinerPoints(st);
+    if(st.getSteinerRatio() >= 1.0)
+      continue;
+    
+    st.computeRatios();
+    non_covered_list.push_back(st);
+  }
+  Queue non_covered(ESMT::compareSteinerRatio, non_covered_list);
+  
+  // Redo concate using simplices from non_covered
+  std::vector<SteinerTree> pre_add;
+  this->setSMTLength(this->getLength());
+  this->computeRatios();
+  double best_ratio = this->getSteinerRatio();
+  k = 1000; // Maximum of max(1000,non_covered.size()) tries
+  if(verbose)
+      std::cout << "Ratio after initial concatenation: "
+		<< best_ratio << std::endl;
+  
+  // Flags used to determine if two sets are disjoint
+  bool *flags = new bool[this->N];
+  for(j = 0; j < this->N; j++)
+      flags[j] = false;
+  
+  // Sort smts for reuse
+  std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerRatio);
+  
+  i = 0;
+  while(true) {
+    c = 1;
+    this->getEdges().clear();
+    
+    // Re-create Disjoint sets.
+    std::vector< DisjointSet > sets;
+    for(j = 0; j < this->n(); j++)
+      sets.push_back(DisjointSet(j));
+    
+    // First add everything from pre_add
+    for(j = 0; j < pre_add.size(); j++) {
+      this->concatAdd(pre_add[j], sets);
+      c += pre_add[j].n()-1;
+    }
+    
+    // Next candidate
+    SteinerTree next(this->getPointsRef());
+    bool added = false;
+    while(i < k && !added && non_covered.size() > 0) {
+      next = non_covered.extract();
+      if(this->concatCheck(next, sets, flags))
+	// This one can be added
+	added = true;
+    }
+    // Add next if any
+    if(added) {
+      this->concatAdd(next, sets);
+      c += next.n()-1;
+    }
 
+    // Now do rest of concatenation
+    j = 0;
+    while(true) {
+      SteinerTree &st = this->smts[j++];
+      if(this->concatCheck(st,sets,flags)) {
+	this->concatAdd(st,sets);
+	c += st.n()-1;
+	if(c >= this->n())
+	  break;
+      }
+    }
+    
+    // Update ratio
+    this->setSMTLength(this->getLength());
+    this->computeRatios();
+    if(!added)
+      // We are done
+      break;
+    if(this->getSteinerRatio() < best_ratio) {
+      if(verbose)
+	std::cout << "Better ratio achieved: " << this->getSteinerRatio()
+		  << std::endl;
+      best_ratio = this->getSteinerRatio();
+      // Add next to pre_add
+      pre_add.push_back(next);
+    }
+    i++;
+  }
+
+  delete flags;
 }
 
+/*
+ * Implementation of ESMT::concatCheck(...)
+ */
 bool ESMT::concatCheck(SteinerTree &st, std::vector<DisjointSet> &sets, bool *flags) {
   unsigned int i;
   std::vector<unsigned int> flags_set;
@@ -534,9 +584,13 @@ bool ESMT::concatCheck(SteinerTree &st, std::vector<DisjointSet> &sets, bool *fl
   // Unset flags again
   for(i = 0; i < flags_set.size(); i++)
     flags[flags_set[i]] = false;
-  return i == st.n(); // If we made it to n -> no conflicts
+  
+  return flags_set.size() == st.n(); // If we made it to n -> no conflicts
 }
 
+/*
+ * Implementation of ESMT::concatAdd(...)
+ */
 void ESMT::concatAdd(SteinerTree &st, std::vector<DisjointSet> &sets) {
   unsigned int i;
 
@@ -568,7 +622,9 @@ void ESMT::concatAdd(SteinerTree &st, std::vector<DisjointSet> &sets) {
 #endif
 }
 
-/* Implementation of postOptimisation() */
+/*
+ * Implementation of ESMT::postOptimisation()
+ */
 void ESMT::postOptimisation() {
   unsigned int i, j, k, v;
 
@@ -696,43 +752,34 @@ void ESMT::postOptimisation() {
   } while(r>l*0.0001);
 }
 
+/*
+ * Implementation of ESMT::compareSteinerRatio(...)
+ */
 bool ESMT::compareSteinerRatio(const SteinerTree &st1, const SteinerTree &st2) {
   if(st1.n() == 2 && st2.n() == 2)
     return st1.getMSTLength() < st2.getMSTLength();
   return st1.getSteinerRatio() < st2.getSteinerRatio();
 }
 
+/*
+ * Implementation of ESMT::compareSteinerBRatio(...)
+ */
 bool ESMT::compareSteinerBRatio(const SteinerTree &st1, const SteinerTree &st2) {
   if(st1.n() == 2 && st2.n() == 2)
     return st1.getMSTLength() < st2.getMSTLength();
   return st1.getBSteinerRatio() < st2.getBSteinerRatio();
 }
 
-bool ESMT::compareLength(Edge e1, Edge e2) {
-  return e1.length < e2.length;
-}
-
+/*
+ * Implementation of ESMT::isInMST(...)
+ */
 bool ESMT::isInMST(int i0, int i1) {
   return (this->in_MST.find(Edge::key(i0,i1)) != this->in_MST.end());
 }
 
-void ESMT::setBLength(SteinerTree &s) {
-  unsigned int i, j;
-  std::vector<Edge> edges;
-  for(i = 0; i < s.n(); i++) {
-    for(j = 0; j < i; j++) {
-      edges.push_back(Edge(i,j,this->bgraph->distance(s.pidx(i),s.pidx(j))));
-    }
-  }
-  Graph g(s.getPoints(), s.getPointsRef(), edges);
-  Utils::MSTKruskalMod(g, false);
-  double bmst_length = 0.0;
-  for(i = 0; i < edges.size(); i++) {
-    bmst_length += edges[i].length;
-  }
-  s.setBMSTLength(bmst_length);
-}
-
+/*
+ * Implementation of ESMT::findCoveredFaces(...)
+ */
 void ESMT::findCoveredFaces(std::vector< PointHandle > &handles,
 			    std::vector< std::vector<int> > &connections) {
 
@@ -756,6 +803,9 @@ void ESMT::findCoveredFaces(std::vector< PointHandle > &handles,
   delete flag;
 }
 
+/*
+ * Implementation of ESMT::findCoveredFacesRec(...)
+ */
 void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
 			       std::vector< std::vector<int> > &connections,
 			       std::vector< int > &currentSimplices,
@@ -787,9 +837,11 @@ void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
     this->components.push_back(prevSet);
     c = this->components.size()-1;
 
-    if(intersection.size() == 1 && prevSet.n() == this->dim+1)
+    if(intersection.size() == 1 && prevSet.n() == this->dim+1) {
       // This is a simplex. Add index to simplex list
       this->simplex_id[c] = intersection[0];
+      this->is_covered_simplex[intersection[0]] = true;
+    }
 
 #if(ESMT_COLLECT_STATS)
     //unsigned int size = components[prevSet].map.size();
@@ -820,6 +872,10 @@ void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
   }
 }
 
+
+/*
+ * Implementation of ESMT::findAllFaces(...)
+ */
 void ESMT::findAllFaces(Delaunay &del) {
   unsigned int i;
   std::vector<Graph> &faces = del.findFaces();

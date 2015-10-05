@@ -197,9 +197,10 @@ private:
    * Performs the concatenation step of the algorithm repeatedly, using the redo technic.
    * Assumes that this->queue contains all sub-trees in order by ratio.
    * 
+   * @param sh            Subgraph heuristic for finding STs of non-covered simplices
    * @param verbose       If true, stats will be printed
    */
-  void doConcatenateWithRedo(bool verbose = false);
+  void doConcatenateWithRedo(SubgraphHeuristic &sh, bool verbose = false);
 
   /**
    * Checks if the given SteinerTree can be added
@@ -222,32 +223,32 @@ private:
   void postOptimisation();
   
   /**
-   * The findFaces procedure finds all covered (MST) faces from the Delaunay
+   * The findCoveredFaces procedure finds all covered (MST) faces from the Delaunay
    * triangulation, which contains the given point.
-   * These faces will be placed in components.
-   * The procedure will leave out faces, which cross simplex boundaries and
-   * which contains points with a lower index.
+   * These faces will be placed in this->components.
+   * The procedure will leave out faces, which cross simplex boundaries.
    *
    * @param handles      A list of point handles from the Delaunay triangulation.
    *                     These contain simplex indices for each point.
-   * @param components   A list to add the faces to.
    * @param connections  Lists the connections for each point in the MST.
-   * @param point        The point to be contained in all faces.
    */
   void findCoveredFaces(std::vector< Utils::Delaunay::PointHandle > &handles,
 			std::vector< std::vector<int> > &connections);
 
   /**
-   * The recursive part of the findFaces procedure.
+   * The recursive part of the findCoveredFaces procedure.
    *
-   * @param handles      A list of point handles from the Delaunay triangulation.
-   *                     These contain simplex indices for each point.
-   * @param components   A list to add the faces to.
-   * @param connections  Lists the connections for each point in the MST.
-   * @param map          An array of size |N|, needed for the procedure.
-   * @param point        Mapmax is the current maximum value in the map.
-   * @param bound        No points with index < bound will be added.
-   * @param prevSet      The index of the previous set.
+   * @param handles           A list of point handles from the Delaunay triangulation.
+   *                          These contain simplex indices for each point.
+   * @param connections       Lists the connections for each point in the MST.
+   * @param currentSimplices  A list of the simplices containing all points of prevSet
+   * @param prevSet           The current face
+   * @param map               An array of size |N|, needed for the procedure.
+   * @param mapmax            Max value in map + 1
+   * @param flag              A flag array, indicating which faces has been visited before.
+   * @param cur               Index of current point.
+   * @param prev              Index of previous edge.
+   * @param bound             No points with index < bound will be added.
    */
   void findCoveredFacesRec(std::vector< Utils::Delaunay::PointHandle > &handles,
 			   std::vector< std::vector<int> > &connections,
@@ -259,7 +260,12 @@ private:
 			   unsigned int cur,
 			   unsigned int prev,
 			   unsigned int bound);
-  
+
+  /**
+   * Procedure findAllFaces finds all faces from the Delaunay triangulation.
+   *
+   * @param del  The Delaunay triangulation.
+   */
   void findAllFaces(Utils::Delaunay &del);
 
   /**
@@ -302,6 +308,7 @@ private:
 			   unsigned int next_simplex_index,
 			   int cur_simplex);
   */
+
   /**
    * Checks if the edge between i0 and i1 is in the MST.
    *
@@ -312,32 +319,28 @@ private:
    */
   bool isInMST(int i0, int i1);
 
-  void setBLength(SteinerTree &st);
-
   ////////////////////////////////////////////////
   // Static functions
   
   /**
-   * Compares two SubST trees with respect to the Steiner ratio.
+   * Compares two SteinerTrees with respect to the Steiner ratio.
    *
-   * @param st1   The first SubST.
-   * @param st2   The second SubST.
+   * @param st1   The first SteinerTree.
+   * @param st2   The second SteinerTree.
    *
    * @return      True if st1.ratio > st2.ratio
    */
   static bool compareSteinerRatio(const SteinerTree &st1, const SteinerTree &st2);
 
-  static bool compareSteinerBRatio(const SteinerTree &st1, const SteinerTree &st2);
-
   /**
-   * Compares two edges with respect to the length.
+   * Compares two SteinerTrees with respect to the Steiner-Bottleneck ratio.
    *
-   * @param e1   The first edge.
-   * @param e2   The second edge.
+   * @param st1   The first SteinerTree.
+   * @param st2   The second SteinerTree.
    *
-   * @return     True, if e1.length > e2.length
+   * @return      True if st1.b_ratio > st2.b_ratio
    */
-  static bool compareLength(Utils::Edge e1, Utils::Edge e2);
+  static bool compareSteinerBRatio(const SteinerTree &st1, const SteinerTree &st2);
 
   /////////////////////////////////////////////////
   // Attributes
