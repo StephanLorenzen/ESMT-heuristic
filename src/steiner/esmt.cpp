@@ -506,6 +506,7 @@ void ESMT::doConcatenateWithRedo(SubgraphHeuristic &sh, bool verbose) {
   while(true) {
     c = 1;
     this->getEdges().clear();
+    this->getSteinerPoints().clear();
     
     // Re-create Disjoint sets.
     std::vector< DisjointSet > sets;
@@ -561,7 +562,7 @@ void ESMT::doConcatenateWithRedo(SubgraphHeuristic &sh, bool verbose) {
     }
     i++;
   }
-
+  
   delete flags;
 }
 
