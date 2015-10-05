@@ -39,11 +39,7 @@ void IterativeConcat::findSteinerPoints(SteinerTree &subgraph) {
   assert(this->dim < this->max_dim);
   assert(n > 2);
   assert(n < CNMAX);
-
-  // Generate the MST as an upper bound
-  double mst_length = subgraph.getMSTLength();
-  assert(mst_length > 0.0);
-
+  
   this->N = n;
   
   // Copy points (+ SP dummies)

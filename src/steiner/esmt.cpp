@@ -186,31 +186,6 @@ void ESMT::findESMT(Delaunay &del,
   }
   
   // 2. Generate faces
-  //if(false && use_bg) {
-    // We have to find all faces
-    /*std::unordered_map<unsigned long,bool> flags;
-    std::vector<Simplex>::iterator sit;
-    for(sit = this->simplices->begin(); sit != this->simplices->end(); sit++) {
-      Subset simp;
-      Subset ss;
-      ss.map.push_back(0);
-      for(i = 0; i < sit->n; i++) {
-	ss.map[0] = sit->map[i];
-	this->findAllFaces(*sit, ss, flags);
-	// Add simplex (simp) outside, since there is not room for key in flag.
-	// (key = d * (64/d-bit) numbers).
-	simp.map.push_back(sit->map[i]);
-      }
-      this->components.push_back(simp);
-    }
-    for(i = 0; i < this->edges.size(); i++) {
-      // Add all MST edges
-      Subset ed;
-      Edge &e = this->edges[i];
-      ed.map.push_back(e.i0);
-      ed.map.push_back(e.i1);
-      this->components.push_back(ed);
-      }*/
   if(use_bg)
     // Find all faces
     this->findAllFaces(del);
@@ -399,10 +374,10 @@ void ESMT::findESMT(Delaunay &del,
   this->stats.no_of_sp = this->s;
 #endif
 
-  /*if(post_optimise) {
+  if(post_optimise) {
     if(verbose)
       std::cout << "Starting post optimisation." << std::endl
-		<< "  Current |SP| = " << this->points.size()-this->N << std::endl;
+		<< "  Current |SP| = " << this->s() << std::endl;
     // Setup for Smiths and add extra SPs. Then optimise, do clean-up and return.
     this->postOptimisation();
 
@@ -422,24 +397,24 @@ void ESMT::findESMT(Delaunay &del,
 #endif
 
     // Convert to ESMT structure
-    this->points.erase(this->points.begin()+this->N, this->points.end());
-    this->edges.clear();
-
-    this->cleanUp(&this->points, &this->edges);
-
+    this->cleanUp(this->steiner_points, this->edges);
+    
 #if(ESMT_COLLECT_STATS)
-    this->stats.no_of_sp_post_optimisation = this->points.size()-this->N;
+    this->stats.no_of_sp_post_optimisation = this->s();
 #endif
-
+    
     if(verbose) {
       std::cout << "Post optimisation done!" << std::endl
-		<< "  |SP| = " << this->points.size()-this->N << std::endl;
+		<< "  |SP| = " << this->s() << std::endl;
 #if(ESMT_COLLECT_STATS)
       std::cout << "  Number of short SP-SP edges: "
 		<< this->stats.no_of_sp_overlapping << std::endl;
 #endif
     }
-    }*/
+
+    this->setSMTLength(this->getLength());
+    this->computeRatios();
+  }
   
   if(use_bg)
     delete this->bgraph;
@@ -595,21 +570,22 @@ void ESMT::concatAdd(SteinerTree &st, std::vector<DisjointSet> &sets) {
 
 /* Implementation of postOptimisation() */
 void ESMT::postOptimisation() {
-  /*unsigned int i, j, k, v;
+  unsigned int i, j, k, v;
 
-  this->S = this->points.size() - this->N;
+  this->N = this->n();
+  this->S = this->s();
   this->P.clear();
-  for(i = 0; i < this->N+this->S; i++)
-    this->P.push_back(this->points[i]);
-  for(i = this->N+this->S; i < 2*this->N-2; i++)
+  for(i = 0; i < this->m(); i++)
+    this->P.push_back(this->getPoint(i));
+  for(i = this->m(); i < 2*this->n()-2; i++)
     this->P.push_back(Point(this->dim));
-
+  
   for(i = 0; i < this->N; i++)
     for(j = 0; j < 3; j++)
       this->adj[i][j] = -1;
 
   std::vector< std::vector<int> > tadj(this->N);
-
+  
   // Fill adj and tadj array
   unsigned int i0, i1, is0, is1;
   for(i = 0; i < this->edges.size(); i++) {
@@ -667,7 +643,7 @@ void ESMT::postOptimisation() {
       this->adj[this->S][0] = tadj[i][a];
       this->adj[this->S][1] = tadj[i][b];
       this->adj[this->S][2] = i;
-
+      
       if(tadj[i][a] >= (int)this->N) {
 	int ai = tadj[i][a]-this->N;
 	for(j = 0; j < 3; j++)
@@ -717,7 +693,7 @@ void ESMT::postOptimisation() {
     this->optimise(0.0001*r/this->N);
     l = this->length();
     r = this->error();
-    } while(r>l*0.0001);*/
+  } while(r>l*0.0001);
 }
 
 bool ESMT::compareSteinerRatio(const SteinerTree &st1, const SteinerTree &st2) {
@@ -756,25 +732,6 @@ void ESMT::setBLength(SteinerTree &s) {
   }
   s.setBMSTLength(bmst_length);
 }
-//void ESMT::buildMST(Subset &subset, Graph &g) {
-  /*std::vector<Point> *points = g.getPointsPtr();
-  std::vector<Edge>  *edges  = g.getEdgesPtr();
-  points->clear();
-  edges->clear();
-
-  unsigned int i, j, i0, i1;
-  for(i = 0; i < subset.map.size(); i++) {
-    points->push_back(this->points[subset.map[i]]);
-    for(j = i+1; j < subset.map.size(); j++) {
-      i0 = subset.map[i];
-      i1 = subset.map[j];
-      if(this->isInMST(i0, i1))
-	edges->push_back(Edge(i, j,
-			      Utils::length(this->points[i0], this->points[i1])));
-    }
-  }
-  g.setMSTLength(g.getLength());*/
-//}
 
 void ESMT::findCoveredFaces(std::vector< PointHandle > &handles,
 			    std::vector< std::vector<int> > &connections) {
@@ -848,11 +805,9 @@ void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
   rank = map[prevSet.pidx(prevSet.n()-1)];
   for(j = 0; j < prevSet.n(); j++) {
     cur = prevSet.pidx(j);
-    //std::cout << "j="<<j<<" cur="<<cur << std::endl;
     for(i = 0; i < connections[cur].size(); i++) {
       next = connections[cur][i];
       bool notFound = (map.find(next) == map.end());
-      //std::cout << " n = "<<next<<", nfound = "<< notFound << std::endl;
       if(next > bound && (notFound || map[next] > rank) && !flag[next]) {
 	if(notFound)
 	  map[next] = mapmax++;
