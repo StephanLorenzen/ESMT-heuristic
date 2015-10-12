@@ -51,7 +51,7 @@ Utils::Point::Point(Utils::Point const& other) {
 }
 
 Utils::Point::~Point() {
-  delete this->_list;
+  delete[] this->_list;
 }
 
 void Utils::Point::setSteiner(bool isSteiner) {

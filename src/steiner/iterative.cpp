@@ -43,20 +43,20 @@ Iterative::Iterative(int dim, int n) {
 Iterative::~Iterative() {
   // Free resources
   for(int i = 0; i < this->alloc; i++) {
-    delete this->adj[i];
-    delete this->EL[i];
-    delete this->B[i];
-    delete this->C[i];
+    delete[] this->adj[i];
+    delete[] this->EL[i];
+    delete[] this->B[i];
+    delete[] this->C[i];
   }
   for(int i = 0; i < 2*this->alloc; i++) {
-    delete this->edge[i];
+    delete[] this->edge[i];
   }
-  delete this->adj;
-  delete this->edge;
-  delete this->EL;
-  delete this->B;
-  delete this->C;
-  delete this->val;
+  delete[] this->adj;
+  delete[] this->edge;
+  delete[] this->EL;
+  delete[] this->B;
+  delete[] this->C;
+  delete[] this->val;
 }
 
 void Iterative::optimise(double tol) {

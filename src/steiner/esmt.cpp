@@ -393,7 +393,7 @@ void ESMT::doConcatenate(bool verbose) {
     i++;
   }
   
-  delete flags;
+  delete[] flags;
 }
 
 /*
@@ -444,7 +444,7 @@ void ESMT::doConcatenateWithBottleneck(bool verbose) {
       this->queue->insert(st);
     }
   }
-  delete flags;
+  delete[] flags;
 }
 
 /*
@@ -563,7 +563,7 @@ void ESMT::doConcatenateWithRedo(SubgraphHeuristic &sh, bool verbose) {
     i++;
   }
   
-  delete flags;
+  delete[] flags;
 }
 
 /*
@@ -801,7 +801,7 @@ void ESMT::findCoveredFaces(std::vector< PointHandle > &handles,
     flag[p] = false;
     map.clear();
   }
-  delete flag;
+  delete[] flag;
 }
 
 /*

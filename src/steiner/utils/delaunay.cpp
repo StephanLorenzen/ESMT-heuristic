@@ -270,7 +270,7 @@ Simplex::Simplex(const Simplex &s)  {
 
 /* Destructor */
 Simplex::~Simplex() {
-  delete this->map;
-  delete this->nextSimplex;
-  delete this->nextVertex;
+  delete[] this->map;
+  delete[] this->nextSimplex;
+  delete[] this->nextVertex;
 }    
