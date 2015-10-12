@@ -5,7 +5,7 @@
 
 #include "steiner/graph.hpp"
 #include "steiner/utils/point.hpp"
-#include "steiner/utils/bottleneck_graph/bottleneck_graph.hpp"
+#include "steiner/utils/bottleneck_graph/bg_simple.hpp"
 
 typedef Utils::Point Point;
 
@@ -15,7 +15,7 @@ typedef Utils::Point Point;
  * Implements a naive version of the Bottleneck Graph.
  * Each time a set of points are merged, the entire graph will be recomputed.
  */
-class BottleneckGraphNaive : public BottleneckGraph {
+class BottleneckGraphNaive : public BottleneckGraphSimple {
 public:
   /**
    * Constructor.
@@ -45,21 +45,12 @@ private:
    * @param i  The first point
    * @param j  The second point
    */
-  unsigned int _getEdgeIndex(const unsigned int i, const unsigned int j);
+  //unsigned int _getEdgeIndex(const unsigned int i, const unsigned int j);
   
   /**
    * Recomputes all bottleneck distances.
    */
   void _recompute();
-  
-  /**
-   * Traverses the tree to find the Bottleneck distance for a single point p.
-   */
-  void _traverse(const unsigned int p, const unsigned int cur,
-		 const unsigned int prevEdge, const unsigned int mEdge);
-
-  /** Stores the bottleneck distances */
-  int** bdist;
 };
 
 #endif // BG_NAIVE_H

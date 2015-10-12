@@ -5,7 +5,7 @@
 
 #include "steiner/graph.hpp"
 #include "steiner/utils/point.hpp"
-#include "steiner/utils/bottleneck_graph/bottleneck_graph.hpp"
+#include "steiner/utils/bottleneck_graph/bg_simple.hpp"
 
 typedef Utils::Point Point;
 
@@ -15,7 +15,7 @@ typedef Utils::Point Point;
  * Implements a lazy version of the Bottleneck Graph.
  * Bottleneck distances are calculated (and stored) when needed.
  */
-class BottleneckGraphLazy : public BottleneckGraph {
+class BottleneckGraphLazy : public BottleneckGraphSimple {
 public:
   /**
    * Constructor.
@@ -50,20 +50,6 @@ private:
    * Recomputes the bottleneck distance between i and j.
    */
   void _recompute(const unsigned int i, const unsigned int j);
-  
-  /**
-   * Traverses the tree to find the Bottleneck distance for a single point p.
-   */
-  void _traverse(const unsigned int p, const unsigned int cur,
-		 const unsigned int prevEdge, const unsigned int mEdge);
-  
-  /**
-   * Computes the key into this->bdist, for an edge (i,j), i < j
-   */
-  unsigned long _key(const unsigned int i, const unsigned int j);
-
-  /** Stores the bottleneck distances */
-  std::unordered_map<unsigned long, unsigned int> bdist;
 };
 
 #endif // BG_LAZY_H
