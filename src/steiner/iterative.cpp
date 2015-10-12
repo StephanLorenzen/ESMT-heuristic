@@ -16,9 +16,10 @@ typedef Utils::Edge  Edge;
 /**
  * Constructor
  */
-Iterative::Iterative(int dim, int n) {
-  this->alloc   = n;
-  this->max_dim = dim;
+Iterative::Iterative(int dim, int n, double treshold) {
+  this->alloc    = n;
+  this->max_dim  = dim;
+  this->treshold = treshold;
   // Allocate resources
   this->adj    = new int*[n];
   this->edge   = new int*[2*n];

@@ -19,6 +19,7 @@
 #include "steiner/utils/delaunay.hpp"
 #include "steiner/utils/bottleneck_graph/bg_naive.hpp"
 #include "steiner/utils/bottleneck_graph/bg_lazy.hpp"
+//#include "steiner/utils/bottleneck_graph/bg_sleator.hpp"
 
 #define ESMT_COLLECT_STATS  0
 
@@ -134,9 +135,10 @@ void ESMT::findESMT(Delaunay &del,
     }
     
     switch(use_bg) {
-    case BOTTLENECK_GRAPH_NAIVE: this->bgraph = new BottleneckGraphNaive(del); break;
-    case BOTTLENECK_GRAPH_LAZY:  this->bgraph = new BottleneckGraphLazy(del);  break;
-    default:                     this->bgraph = new BottleneckGraphNaive(del); break;
+    case BOTTLENECK_GRAPH_NAIVE:   this->bgraph = new BottleneckGraphNaive(del);   break;
+    case BOTTLENECK_GRAPH_LAZY:    this->bgraph = new BottleneckGraphLazy(del);    break;
+      //case BOTTLENECK_GRAPH_SLEATOR: this->bgraph = new BottleneckGraphSleator(del); break;
+    default:                       this->bgraph = new BottleneckGraphNaive(del);   break;
     }
   }
   this->edges              = del.getEdges();
@@ -747,10 +749,10 @@ void ESMT::postOptimisation() {
   double l = this->length();
   double r = this->error(); 
   do {
-    this->optimise(0.0001*r/this->N);
+    this->optimise(this->treshold*r/this->N);
     l = this->length();
     r = this->error();
-  } while(r>l*0.0001);
+  } while(r>l*this->treshold);
 }
 
 /*

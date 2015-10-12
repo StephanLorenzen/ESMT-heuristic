@@ -69,11 +69,11 @@ void IterativeSmith::findSteinerPoints(SteinerTree &subgraph) {
     l = this->length();
     r = this->error();
     do {
-      this->optimise(0.0001*r/this->N);
+      this->optimise(this->treshold*r/this->N);
       l = this->length();
       r = this->error();
     }
-    while(r>l*0.0001);
+    while(r>l*this->treshold);
   }
   else {
     // General case - generate topologies
@@ -86,7 +86,8 @@ void IterativeSmith::findSteinerPoints(SteinerTree &subgraph) {
     
     int k = 0;
     double upper_bound = mst_length;
-    
+    double low_treshold = 50*this->treshold;
+ 
     while(1) {
       // Build tree for given topology
       this->buildTree(k+1, topo_vec);
@@ -95,11 +96,11 @@ void IterativeSmith::findSteinerPoints(SteinerTree &subgraph) {
       l = this->length();
       r = this->error();
       do {
-	this->optimise(0.0001*r/this->N);
+	this->optimise(low_treshold*r/this->N);
 	l = this->length();
 	r = this->error();
       }
-      while(r>l*0.0001);
+      while(r>l*low_treshold);
       
       if(l*0.999 <= upper_bound) {
 	// This is a candidate ...
@@ -138,11 +139,11 @@ void IterativeSmith::findSteinerPoints(SteinerTree &subgraph) {
     l = this->length();
     r = this->error();
     do {
-      this->optimise(0.0001*r/this->N);
+      this->optimise(this->treshold*r/this->N);
       l = this->length();
       r = this->error();
     }
-    while(r>l*0.0001);  
+    while(r>l*this->treshold);  
   }
   // The tree is done
 

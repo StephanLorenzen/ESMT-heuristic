@@ -19,7 +19,7 @@ public:
   /**
    * Constructor
    */
-  Iterative(int dim, int n);
+  Iterative(int dim, int n, double treshold = 0.0001);
   
   /**
    * Destructor
@@ -82,6 +82,7 @@ protected:
   unsigned int dim;            // Dimension
   int alloc;                   // Places allocated
 
+  double treshold;             // Treshold for optimise
 
 private:
 

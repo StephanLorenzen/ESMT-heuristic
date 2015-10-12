@@ -15,9 +15,10 @@
 #include "steiner/utils/bottleneck_graph/bottleneck_graph.hpp"
 
 // Bottleneck Graph - allowed values
-#define BOTTLENECK_GRAPH_NONE   0
-#define BOTTLENECK_GRAPH_NAIVE  1
-#define BOTTLENECK_GRAPH_LAZY   2
+#define BOTTLENECK_GRAPH_NONE    0
+#define BOTTLENECK_GRAPH_NAIVE   1
+#define BOTTLENECK_GRAPH_LAZY    2
+#define BOTTLENECK_GRAPH_SLEATOR 3
 
 /**
  * @class ESMT

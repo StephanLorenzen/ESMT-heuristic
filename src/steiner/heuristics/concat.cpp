@@ -67,10 +67,10 @@ void IterativeConcat::findSteinerPoints(SteinerTree &subgraph) {
     l = this->length();
     r = this->error(); 
     do {
-      this->optimise(0.0001*r/this->N);
+      this->optimise(this->treshold*r/this->N);
       l = this->length();
       r = this->error();
-    } while(r>l*0.0001);
+    } while(r>l*this->treshold);
   }
   else {
     for(i = 3; i < this->N; i++) {
@@ -89,8 +89,9 @@ void IterativeConcat::findSteinerPoints(SteinerTree &subgraph) {
       // sp is now closest SP.
       this->topo_vec[i-3][0] = sp-this->N;
     
-      double best_l = -1;
-      int    best_e = 0;
+      double best_l       = -1;
+      int    best_e       = 0;
+      double low_treshold = 50*this->treshold;
       for(j = 0; j < 3; j++) {
 	this->topo_vec[i-3][1] = j;
 	this->buildTreeConcat(i-2);
@@ -101,10 +102,10 @@ void IterativeConcat::findSteinerPoints(SteinerTree &subgraph) {
 	l = this->length();
 	r = this->error();  
 	do {
-	  this->optimise(0.0001*r/this->N);
+	  this->optimise(low_treshold*r/this->N);
 	  l = this->length();
 	  r = this->error();
-	} while(r>l*0.0001);
+	} while(r>l*low_treshold);
       
 	this->S--;
 	
@@ -121,10 +122,10 @@ void IterativeConcat::findSteinerPoints(SteinerTree &subgraph) {
       l = this->length();
       r = this->error();  
       do {
-	this->optimise(0.0001*r/this->N);
+	this->optimise(this->treshold*r/this->N);
 	l = this->length();
 	r = this->error();
-      } while(r>l*0.0001);
+      } while(r>l*this->treshold);
       // Done
     }
   }
@@ -245,15 +246,15 @@ double IterativeConcat::insertPoint(unsigned int i,
     this->adj[opi][k] = this->N+this->S;
   }
   this->S++;
-
+  
   // Optimise
   l = this->length();
   r = this->error();
   do {
-    this->optimise(0.0001*r/this->N);
+    this->optimise(this->treshold*r/this->N);
     l = this->length();
     r = this->error();
-  } while(r>l*0.0001);
+  } while(r>l*this->treshold);
   return l;
 }
 
