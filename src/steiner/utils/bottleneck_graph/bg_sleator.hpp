@@ -74,6 +74,12 @@ private:
   };
   typedef Vertex Path;
 
+  struct RRS {
+    Vertex *res;
+    bool reversed;
+    double grossmin;
+  };
+
   // Static tree operations
   Vertex *parent(Vertex *v);
   Vertex *root(Vertex *v);
@@ -81,8 +87,8 @@ private:
   double mincost(Vertex *v);
   void update(Vertex *v, double x);
   // Dynamic tree operations
-  Vertex *link(Vertex *v, Vertex *u, double x);
-  Vertex *cut(Vertex *v);
+  void link(Vertex *v, Vertex *w, double x);
+  double cut(Vertex *v);
   void evert(Vertex *v);
   
   /////////////////////////////
@@ -90,8 +96,8 @@ private:
   
   // Struct for storing result of a split
   struct SplitResult {
-    Vertex *q;
-    Vertex *p;
+    Path *q;
+    Path *r;
     double x, y;
   };
 
@@ -100,7 +106,7 @@ private:
   Vertex *head(Path *p);
   Vertex *tail(Path *p);
   Vertex *before(Vertex *v);
-  //bool before_rec(const unsigned int i, int &r, bool &st);
+  void before_rec(Vertex *v, RRS &c);
   Vertex *after(Vertex *v);
   //bool after_rec(const unsigned int i, int &r, bool &st);
   double pcost(Vertex *v);
