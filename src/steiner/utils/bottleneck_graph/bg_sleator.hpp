@@ -67,25 +67,28 @@ private:
     Vertex *bhead;
     Vertex *btail;
     bool external, reversed;
-    double netcost, netmin;
+    //double netcost, netmin;
+
+    double cost;
+    double maxcost;
 
     Vertex *dparent;
     double dcost;
+
+    int height;
   };
   typedef Vertex Path;
 
-  struct RRS {
-    Vertex *res;
-    bool reversed;
-    double grossmin;
-  };
+  void pathDecompose(std::vector< std::vector<unsigned int> > conns,
+		     unsigned int cur, unsigned int prev, Path *path);
 
   // Static tree operations
   Vertex *parent(Vertex *v);
   Vertex *root(Vertex *v);
   double cost(Vertex *v);
-  double mincost(Vertex *v);
-  void update(Vertex *v, double x);
+  Vertex *maxcost(Vertex *v);
+  //Vertex *mincost(Vertex *v);
+  //void update(Vertex *v, double x);
   // Dynamic tree operations
   void link(Vertex *v, Vertex *w, double x);
   double cut(Vertex *v);
@@ -101,6 +104,16 @@ private:
     double x, y;
   };
 
+  // Recursive result struct
+  struct RRS {
+    Vertex *res;
+    Vertex *path;
+    bool reversed;
+    //double grossmin;
+    double cost;
+    double maxcost;
+  };
+
   // Path operations
   Path *path(Vertex *v);
   Vertex *head(Path *p);
@@ -108,21 +121,37 @@ private:
   Vertex *before(Vertex *v);
   void before_rec(Vertex *v, RRS &c);
   Vertex *after(Vertex *v);
-  //bool after_rec(const unsigned int i, int &r, bool &st);
+  void after_rec(Vertex *v, RRS &c);
   double pcost(Vertex *v);
-  //bool pcost_rec(unsigned int i, int &r, bool &st, double &g, double &grossmin);
-  double pmincost(Path *p);
-  //double pmincost_rec(unsigned int u, bool &r);
-  void pupdate(Path *p, double x);
+  void pcost_rec(Vertex *v, RRS &c);
+  Vertex *pmaxcost(Path *p);
+  //Vertex *pmincost(Path *p);
+  //void pupdate(Path *p, double x);
   void reverse(Path *p);
   Path *concatenate(Path *p, Path *q, double x);
-  void split(Path *p, SplitResult &res);
-  
+  void split(Vertex *v, SplitResult &res);
+
   // Splice and expose
   Path *splice(Path *p);
   Path *expose(Vertex *v);
   
+  // AVL tree operations
+  struct DestructResult {
+    Vertex *v;
+    Vertex *w;
+    double x;
+  };
+
+  Vertex *construct(Vertex *v, Vertex *w, double x);
+  void destruct(Vertex *u, DestructResult &c);
+  void rotateleft(Vertex *v);
+  void rotateright(Vertex *v);
+  void balance(Vertex *v);
+  void tsplit(Vertex *r, Vertex *v, std::vector<bool> &path, int i, DestructResult &dr);
+  void treepath(Vertex *v, std::vector<bool> &path, RRS &c, bool before);
+    
   std::vector<Vertex> _vertices;
+  std::vector<Point> &_pointsRef;
 };
 
 #endif // BG_SLEATOR_H
