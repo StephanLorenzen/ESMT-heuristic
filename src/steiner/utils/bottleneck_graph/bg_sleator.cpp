@@ -23,8 +23,11 @@ BottleneckGraphSleator::BottleneckGraphSleator(Graph &g)
     this->_vertices[i].external = true;
     this->_vertices[i].reversed = false;
     this->_vertices[i].height   = 1;
+    this->_vertices[i].idx      = i;
+    this->_vertices[i].cost     = 0;
+    this->_vertices[i].maxcost  = 0;
   }
-  Utils::MSTKruskalMod(g);
+  Utils::MSTKruskalMod(g, true);
   // Traverse tree
   std::vector< std::vector<unsigned int> > conns(g.n());
   std::vector<Edge> &edges = g.getEdges();
@@ -35,15 +38,20 @@ BottleneckGraphSleator::BottleneckGraphSleator(Graph &g)
   }
   this->pathDecompose(conns, 0, 0, NULL);
 }
+
 void BottleneckGraphSleator::pathDecompose(std::vector< std::vector<unsigned int> > conns,
 					   unsigned int cur, unsigned int prev, Path *path) {
   if(path)
-    path = this->construct(path, &this->_vertices[cur], Utils::length(this->_pointsRef[cur], this->_pointsRef[prev]));
-  else
+    path = this->concatenate(&this->_vertices[cur], path, Utils::length(this->_pointsRef[cur], this->_pointsRef[prev]));
+  else {
     path = &this->_vertices[cur];
+    if(cur != 0) {
+      path->dparent = &this->_vertices[prev];
+      path->dcost   = Utils::length(this->_pointsRef[cur], this->_pointsRef[prev]);
+    }
+  }
   for(unsigned int i = 0; i < conns[cur].size(); i++) {
     if(conns[cur][i] != prev) {
-      //std::cout << i << std::endl;
       this->pathDecompose(conns, conns[cur][i], cur, path);
       path = NULL;
     }
@@ -53,13 +61,33 @@ void BottleneckGraphSleator::pathDecompose(std::vector< std::vector<unsigned int
 /*
  * Implementation of BottleneckGraphSleator destructor
  */
-BottleneckGraphSleator::~BottleneckGraphSleator() { }
+BottleneckGraphSleator::~BottleneckGraphSleator() {
+  // Assume all connected
+  for(unsigned int i = 0; i < this->_vertices.size(); i++)
+    if(this->_vertices[i].bparent)
+      this->_cleanUp(this->path(&this->_vertices[i]));
+  
+}
+
+void BottleneckGraphSleator::_cleanUp(Vertex *v) {
+  if(v->external)
+    v->bparent = NULL;
+  else {
+    this->_cleanUp(v->bleft);
+    this->_cleanUp(v->bright);
+    delete v;
+  }
+}
 
 /**
  * Implementation of BottleneckGraphSleator::distance(...)
  */
 double BottleneckGraphSleator::distance(const unsigned int i, const unsigned int j) {
-  return 0.0;
+  if(i==j)
+    return 0.0;
+  this->evert(&this->_vertices[i]);
+  Vertex *v = this->maxcost(&this->_vertices[j]);
+  return v ? this->cost(v) : -1.0;
 }
 
 /**
@@ -86,15 +114,10 @@ BottleneckGraphSleator::Vertex *BottleneckGraphSleator::root(Vertex *v) {
 double BottleneckGraphSleator::cost(Vertex *v) {
   return v == this->tail(this->path(v)) ? v->dcost : this->pcost(v);
 }
-/*BottleneckGraphSleator::Vertex *BottleneckGraphSleator::mincost(Vertex *v) {
-  return this->pmincost(this->expose(v));
-  }*/
 BottleneckGraphSleator::Vertex *BottleneckGraphSleator::maxcost(Vertex *v) {
   return this->pmaxcost(this->expose(v));
 }
-/*void BottleneckGraphSleator::update(Vertex *v, double x) {
-  this->pupdate(this->expose(v), x);
-  }*/
+
 // Dynamic tree operations
 void BottleneckGraphSleator::link(Vertex *v, Vertex *w, double x) {
   this->concatenate(this->path(v), this->expose(w), x);
@@ -126,107 +149,76 @@ BottleneckGraphSleator::Vertex *BottleneckGraphSleator::tail(Path *p) {
 BottleneckGraphSleator::Vertex *BottleneckGraphSleator::before(Vertex *v) {
   RRS c;
   c.reversed = false;
+  c.res      = NULL;
   this->before_rec(v, c);
   Vertex *w = c.res;
+  if(!w)
+    return NULL;
   Vertex *u = w->bparent->bleft == w ? w->bparent->bright : w->bparent->bleft;
-  bool rev = (c.reversed != u->reversed); 
+  bool rev = (c.resrev != u->reversed); 
   if(u->external)
     return u;
   else
     return rev ? u->bhead : u->btail;
 }
 void BottleneckGraphSleator::before_rec(Vertex *v, RRS &c) {
-  if(!v)
-    return;
   Vertex *par = v->bparent;
+  if(!par)
+    // Root
+    return;
   this->before_rec(par, c);
-  if(par) {
-    if(c.reversed) {
-      if(v == par->bleft) {
-	c.res = v;
-      }
-    }
-    else if(v == par->bright) {
+  c.reversed = (c.reversed != par->reversed);
+  if(c.reversed) {
+    if(v == par->bleft) {
       c.res = v;
+      c.resrev = c.reversed;
     }
   }
-  c.reversed = (c.reversed != v->reversed);
+  else if(v == par->bright) {
+    c.res = v;
+    c.resrev = c.reversed;
+  }
 }
 BottleneckGraphSleator::Vertex *BottleneckGraphSleator::after(Vertex *v) {
   RRS c;
   c.reversed = false;
+  c.res = NULL;
   this->after_rec(v, c);
   Vertex *w = c.res;
+  if(!w)
+    return NULL;
   Vertex *u = w->bparent->bleft == w ? w->bparent->bright : w->bparent->bleft;
-  bool rev = (c.reversed != u->reversed); 
+  bool rev = (c.resrev != u->reversed); 
   if(u->external)
     return u;
   else
-    return rev ? u->bhead : u->btail;
+    return rev ? u->btail : u->bhead;
 }
 void BottleneckGraphSleator::after_rec(Vertex *v, RRS &c) {
-  if(!v)
-    return;
   Vertex *par = v->bparent;
-  this->before_rec(par, c);
-  if(par) {
-    if(c.reversed) {
-      if(v == par->bright) {
-	c.res = v;
-      }
-    }
-    else if(v == par->bleft) {
+  if(!par)
+    // Root
+    return;
+  this->after_rec(par, c);
+  c.reversed = (c.reversed != par->reversed);
+  if(c.reversed) {
+    if(v == par->bright) {
       c.res = v;
+      c.resrev = c.reversed;
     }
   }
-  c.reversed = (c.reversed != v->reversed);
-}
-/*double BottleneckGraphSleator::pcost(Vertex *v) {
-  RRS c;
-  this->pcost_rec(v, c);
-  Vertex *w = c.res;
-  return w->bparent->netcost + (c.grossmin-w->netmin);
-}
-void BottleneckGraphSleator::pcost_rec(Vertex *v, RRS &c) {
-  if(!v)
-    return;
-  Vertex *par = v->bparent;
-  this->pcost_rec(par, c);
-  if(par) {
-    if(c.reversed) {
-      if(v == par->bright) {
-	c.res = v;
-      }
-    }
-    else if(v == par->bleft) {
-      c.res = v;
-    }
+  else if(v == par->bleft) {
+    c.res = v;
+    c.resrev = c.reversed;
   }
-  c.grossmin += v->netmin;
-  c.reversed = (c.reversed != v->reversed);
-}*/
+}
 double BottleneckGraphSleator::pcost(Vertex *v) {
   RRS c;
-  this->pcost_rec(v, c);
-  Vertex *w = c.res;
-  return w->bparent->cost;
-}
-void BottleneckGraphSleator::pcost_rec(Vertex *v, RRS &c) {
-  if(!v)
-    return;
-  Vertex *par = v->bparent;
-  this->pcost_rec(par, c);
-  if(par) {
-    if(c.reversed) {
-      if(v == par->bright) {
-	c.res = v;
-      }
-    }
-    else if(v == par->bleft) {
-      c.res = v;
-    }
-  }
-  c.reversed = (c.reversed != v->reversed);
+  c.res = NULL;
+  c.reversed = false;
+  this->after_rec(v, c);
+  Vertex *w = c.res->bparent;
+  return w->cost;
 }
 BottleneckGraphSleator::Vertex *BottleneckGraphSleator::pmaxcost(Path *p) {
   bool rev = false;
@@ -237,111 +229,105 @@ BottleneckGraphSleator::Vertex *BottleneckGraphSleator::pmaxcost(Path *p) {
     rev = (rev != u->reversed);
     if(rev) { r = u->bleft;  l = u->bright; }
     else    { r = u->bright; l = u->bleft;  }
-    if(!r->external && r->maxcost-r->cost == 0)
-      u = r;
-    else if(r->maxcost-u->cost > 0)
-      u = l;
-    else
+    if(u->external || (r->external && l->external) || abs(u->maxcost-u->cost) <= 0.0001)
+      // Edge has been found
       break;
+    else
+      u = (r->maxcost > l->maxcost && !r->external ? r : l);
   }
+  if(u->external)
+    return NULL;
   // Return rightmost external descendant of l
   if(l->external) return l;
   else if(rev) return l->bhead;
   else return l->btail;
 }
-/*BottleneckGraphSleator::Vertex *BottleneckGraphSleator::pmincost(Path *p) {
-  bool rev = false;
-  Vertex *u = p;
-  Vertex *r;
-  Vertex *l;
-  while(true) {
-    rev = (rev != u->reversed);
-    if(rev) { r = u->bleft;  l = u->bright; }
-    else    { r = u->bright; l = u->bleft;  }
-    if(!r->external && r->netcost == 0)
-      u = r;
-    else if(u->netcost > 0)
-      u = l;
-    else
-      break;
-  }
-  // Return rightmost external descendant of l
-  if(l->external) return l;
-  else if(rev) return l->bhead;
-  else return l->btail;
-  }*/
-/*void BottleneckGraphSleator::pupdate(Path *p, double x) {
-  p->netmin += x;
-  }*/
 void BottleneckGraphSleator::reverse(Path *p) {
   p->reversed = !p->reversed;
 }
 BottleneckGraphSleator::Path *BottleneckGraphSleator::concatenate(Path *p, Path *q, double x) {
-  return this->construct(this->tail(p), this->head(q), x);
+  if(p->dparent == q)
+    p->dparent = NULL;
+  if(q->dparent == p)
+    q->dparent = NULL;
+  return this->construct(p, q, x);
 }
-
-void BottleneckGraphSleator::treepath(Vertex *v, std::vector<bool> &path, RRS &c, bool before) {
-  if(!v)
+void BottleneckGraphSleator::treepath(Vertex *v, Vertex **r, bool &reversed, bool before) {
+  if(!v) {
+    r = NULL;
     return;
+  }
   Vertex *par = v->bparent;
-  this->treepath(par, path, c, before);
+  this->treepath(par, r, reversed, before);
   if(par) {
-    if(c.reversed) {
+    if(reversed) {
       if((before && v == par->bleft) || (!before && v == par->bright)) {
-	c.res = v;
+	*r = par;
       }
     }
     else if((!before && v == par->bleft) || (before && v == par->bright)) {
-      c.res = v;
+      *r = par;
     }
-    path.push_back(v==par->bright);
   }
-  else
-    c.path = v;
-  c.reversed = (c.reversed != v->reversed);  
+  reversed = (reversed != v->reversed);
 }
-void BottleneckGraphSleator::tsplit(Vertex *r, Vertex *v, std::vector<bool> &path, int i, DestructResult &dr) {
-  assert(r);
-  if(r==v) {
+void BottleneckGraphSleator::tsplit(Vertex *v, bool right, DestructResult &dr) {
+  Vertex *par = v->bparent;
+  bool pright = (par && par->bright == v);
+  if(!dr.left)
     this->destruct(v, dr);
-  }
-  else if(path[i]) {
-    // Right
-    this->tsplit(r->bright, v, path, i+1, dr);
-    dr.v = this->construct(r->bleft, dr.v, r->cost);
-    delete r;
-  }
   else {
-    // Left
-    this->tsplit(r->bleft, v, path, i+1, dr);
-    dr.w = this->construct(dr.w, r->bright, r->cost);
-    delete r;
+    if(right)
+      dr.left = this->construct(v->bleft, dr.left, v->cost);
+    else
+      dr.right = this->construct(dr.right, v->bright, v->cost);
+    dr.left->reversed  = (dr.left->reversed != v->reversed);
+    dr.right->reversed = (dr.right->reversed != v->reversed);
+    if(v->reversed) {
+      Vertex *tmp = dr.left;
+      dr.left     = dr.right;
+      dr.right    = tmp;
+    }
+    delete v;
   }
+  if(par)
+    this->tsplit(par, pright, dr);
 }
 void BottleneckGraphSleator::split(Vertex *v, SplitResult &res) {
-  std::vector<bool> path;
-  RRS c;
+  Vertex *r = NULL;
+  bool rev = false;
   DestructResult dr1, dr2;
-  this->treepath(v, path, c, true);
-  this->tsplit(c.path, c.res, path, 0, dr1);
-  this->treepath(v, path, c, false);
-  this->tsplit(c.path, c.res, path, 0, dr2);
+  dr1.left = NULL;
+  dr1.right = NULL;
+  dr2.left = NULL;
+  dr2.right = NULL;
+  this->treepath(v, &r, rev, true);
+  if(r)
+    this->tsplit(r, false, dr1);
   
-  res.q = dr1.v;
+  r = NULL;
+  rev = false;
+  this->treepath(v, &r, rev, false);
+  if(r)
+    this->tsplit(r, false, dr2);
+  
+  res.q = dr1.left;
   res.x = dr1.x;
-  res.r = dr2.v == v ? dr2.w : dr2.v;
+  res.r = dr2.right;
   res.y = dr2.x;
 }
   
 // Splice and expose
 BottleneckGraphSleator::Path *BottleneckGraphSleator::splice(Path *p) {
   Vertex *v = this->tail(p)->dparent;
+  assert(v);
   SplitResult s;
   this->split(v, s);
   if(s.q) {
     this->tail(s.q)->dparent = v;
     this->tail(s.q)->dcost   = s.x;
   }
+  
   p = this->concatenate(p, this->path(v), this->tail(p)->dcost);
   return s.r ? this->concatenate(p, s.r, s.y) : p;
 }
@@ -370,29 +356,37 @@ BottleneckGraphSleator::Vertex *BottleneckGraphSleator::construct(Vertex *v, Ver
   r->btail    = this->tail(w);
   r->external = false;
   r->reversed = false;
-  //double gmin = min(v->netmin, w->netmin);
-  //r->netmin   = gmin;
-  //r->netcost  = x - gmin;
   r->cost     = x;
-  r->maxcost  = v->maxcost > w->maxcost ? v->maxcost : w->maxcost;;
+  r->maxcost  = v->maxcost > w->maxcost ? v->maxcost : w->maxcost;
+  r->maxcost  = r->maxcost > x ? r->maxcost : x;
+  r->idx      = this->head(v)->idx*10+this->tail(w)->idx;
   
   r->dparent  = NULL;
   r->dcost    = 0.0;
 
   r->height   = (v->height > w->height ? v->height : w->height) + 1;
-
   this->balance(r);
   return r;
 }
 void BottleneckGraphSleator::destruct(Vertex *u, DestructResult &c) {
-  c.v = u->bleft;
-  c.w = u->bright;
+  c.left = u->bleft;
+  c.left->bparent = NULL;
+  c.left->reversed = (c.left->reversed != u->reversed);
+  c.right = u->bright;
+  c.right->bparent = NULL;
+  c.right->reversed = (c.right->reversed != u->reversed);
   c.x = u->cost;
+  if(u->reversed) {
+    Vertex *tmp = c.left;
+    c.left = c.right;
+    c.right = tmp;
+  }
   delete u;
   // Make sure subtrees are balanced (they should always be)
-  this->balance(c.v);
-  this->balance(c.w);
+  this->balance(c.left);
+  this->balance(c.right);
 }
+
 void BottleneckGraphSleator::rotateleft(Vertex *v) {
   Vertex *rc = v->bright;
   if(!rc)
@@ -438,6 +432,7 @@ void BottleneckGraphSleator::rotateright(Vertex *v) {
   v->height  = (lc->height > p->height ? lc->height : p->height)+1;
 }
 void BottleneckGraphSleator::balance(Vertex *v) {
+  return; // TODO
   int lh = v->bleft ? v->bleft->height : 0;
   int rh = v->bright ? v->bright->height : 0;
   int balance = lh-rh;

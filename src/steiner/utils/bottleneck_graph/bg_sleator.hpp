@@ -48,6 +48,7 @@ public:
 protected:
 private:
 
+
   /**
    * Get the index in this->edges of the bottleneck edge for the two given points
    *
@@ -67,17 +68,21 @@ private:
     Vertex *bhead;
     Vertex *btail;
     bool external, reversed;
-    //double netcost, netmin;
-
+    
     double cost;
     double maxcost;
-
+    
     Vertex *dparent;
     double dcost;
-
+    
     int height;
+    
+    int idx;
   };
   typedef Vertex Path;
+
+  
+  void _cleanUp(Vertex *v);
 
   void pathDecompose(std::vector< std::vector<unsigned int> > conns,
 		     unsigned int cur, unsigned int prev, Path *path);
@@ -87,8 +92,6 @@ private:
   Vertex *root(Vertex *v);
   double cost(Vertex *v);
   Vertex *maxcost(Vertex *v);
-  //Vertex *mincost(Vertex *v);
-  //void update(Vertex *v, double x);
   // Dynamic tree operations
   void link(Vertex *v, Vertex *w, double x);
   double cut(Vertex *v);
@@ -107,11 +110,8 @@ private:
   // Recursive result struct
   struct RRS {
     Vertex *res;
-    Vertex *path;
     bool reversed;
-    //double grossmin;
-    double cost;
-    double maxcost;
+    bool resrev;
   };
 
   // Path operations
@@ -123,10 +123,7 @@ private:
   Vertex *after(Vertex *v);
   void after_rec(Vertex *v, RRS &c);
   double pcost(Vertex *v);
-  void pcost_rec(Vertex *v, RRS &c);
   Vertex *pmaxcost(Path *p);
-  //Vertex *pmincost(Path *p);
-  //void pupdate(Path *p, double x);
   void reverse(Path *p);
   Path *concatenate(Path *p, Path *q, double x);
   void split(Vertex *v, SplitResult &res);
@@ -137,8 +134,8 @@ private:
   
   // AVL tree operations
   struct DestructResult {
-    Vertex *v;
-    Vertex *w;
+    Vertex *left;
+    Vertex *right;
     double x;
   };
 
@@ -147,8 +144,8 @@ private:
   void rotateleft(Vertex *v);
   void rotateright(Vertex *v);
   void balance(Vertex *v);
-  void tsplit(Vertex *r, Vertex *v, std::vector<bool> &path, int i, DestructResult &dr);
-  void treepath(Vertex *v, std::vector<bool> &path, RRS &c, bool before);
+  void tsplit(Vertex *v, bool right, DestructResult &dr);
+  void treepath(Vertex *v, Vertex **r, bool &reversed, bool before);
     
   std::vector<Vertex> _vertices;
   std::vector<Point> &_pointsRef;
