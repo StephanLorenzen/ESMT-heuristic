@@ -94,14 +94,19 @@ double BottleneckGraphSleator::distance(const unsigned int i, const unsigned int
  * Implementation of BottleneckGraphSleator::mergePoints(...)
  */
 void BottleneckGraphSleator::mergePoints(const std::vector<unsigned int> &points) {
-  return;
-}
-
-/**
- * Implementation of BottleneckGraphSleator::_getEdgeIndex(...)
- */
-unsigned int BottleneckGraphSleator::_getEdgeIndex(const unsigned int i, const unsigned int j) {
-  return 0;
+  if(points.size() < 2)
+    return;
+  
+  // Remove the bottleneck edges
+  for(unsigned int i=0; i<this->_vertices.size(); i++) {
+    this->evert(&this->_vertices[i]);
+    for(unsigned int j=i+1; j<this->_vertices.size(); j++) {
+      this->cut(&this->_vertices[j]);
+    }
+  }
+  
+  for(unsigned int i=1; i<this->_vertices.size(); i++)
+    this->link(&this->_vertices[i-1], &this->_vertices[i], 0.0);
 }
 
 // Static tree operations
@@ -432,7 +437,6 @@ void BottleneckGraphSleator::rotateright(Vertex *v) {
   v->height  = (lc->height > p->height ? lc->height : p->height)+1;
 }
 void BottleneckGraphSleator::balance(Vertex *v) {
-  return; // TODO
   int lh = v->bleft ? v->bleft->height : 0;
   int rh = v->bright ? v->bright->height : 0;
   int balance = lh-rh;

@@ -48,15 +48,6 @@ public:
 protected:
 private:
 
-
-  /**
-   * Get the index in this->edges of the bottleneck edge for the two given points
-   *
-   * @param i  The first point
-   * @param j  The second point
-   */
-  unsigned int _getEdgeIndex(const unsigned int i, const unsigned int j);
-
   //////////////////////////////////////////////////////
   // Functions needed for Sleator/Trajan implementation
   
