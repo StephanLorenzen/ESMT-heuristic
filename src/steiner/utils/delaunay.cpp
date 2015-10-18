@@ -26,13 +26,13 @@ Utils::Delaunay::Delaunay(std::vector<Utils::Point> &points) : Graph(points) {
   this->qdelaunay_output = "qdelaunay_temp_output_"+std::to_string(ms.count())+".txt";
   
   this->doDelaunayQHull();
-}
-
-/* Implementation of the destructor */
-Utils::Delaunay::~Delaunay() {
+  
   remove(qdelaunay_input.c_str());
   remove(qdelaunay_output.c_str());
 }
+
+/* Implementation of the destructor */
+Utils::Delaunay::~Delaunay() { }
 
 /* Implementation of getSimplices() */
 std::vector<Utils::Delaunay::Simplex> &Utils::Delaunay::getSimplices() {
