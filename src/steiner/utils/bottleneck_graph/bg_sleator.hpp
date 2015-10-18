@@ -137,6 +137,8 @@ private:
   void balance(Vertex *v);
   void tsplit(Vertex *v, bool right, DestructResult &dr);
   void treepath(Vertex *v, Vertex **r, bool &reversed, bool before);
+
+  void info();
     
   std::vector<Vertex> _vertices;
   std::vector<Point> &_pointsRef;

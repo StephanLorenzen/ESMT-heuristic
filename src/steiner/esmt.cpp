@@ -19,7 +19,7 @@
 #include "steiner/utils/delaunay.hpp"
 #include "steiner/utils/bottleneck_graph/bg_naive.hpp"
 #include "steiner/utils/bottleneck_graph/bg_lazy.hpp"
-//#include "steiner/utils/bottleneck_graph/bg_sleator.hpp"
+#include "steiner/utils/bottleneck_graph/bg_sleator.hpp"
 
 #define ESMT_COLLECT_STATS  0
 
@@ -137,7 +137,7 @@ void ESMT::findESMT(Delaunay &del,
     switch(use_bg) {
     case BOTTLENECK_GRAPH_NAIVE:   this->bgraph = new BottleneckGraphNaive(del);   break;
     case BOTTLENECK_GRAPH_LAZY:    this->bgraph = new BottleneckGraphLazy(del);    break;
-      //case BOTTLENECK_GRAPH_SLEATOR: this->bgraph = new BottleneckGraphSleator(del); break;
+    case BOTTLENECK_GRAPH_SLEATOR: this->bgraph = new BottleneckGraphSleator(del); break;
     default:                       this->bgraph = new BottleneckGraphNaive(del);   break;
     }
   }
@@ -209,8 +209,8 @@ void ESMT::findESMT(Delaunay &del,
   // Begin finding small SMTs.
   // Allocate vector now. Approx each element should be added.
   this->smts.reserve(this->components.size());
-  
-  std::vector< Graph >::iterator sit;
+
+  std::vector< Graph >::iterator sit;  
   for(sit = this->components.begin(); sit != this->components.end(); sit++) {
     if(sit->n() == 2) {
       std::vector<Edge> edges;
@@ -229,7 +229,6 @@ void ESMT::findESMT(Delaunay &del,
 	Utils::MSTKruskalMod(*sit, true);
       SteinerTree st(sit->getPoints(), sit->getPointsRef(), sit->getEdges());
       st.setMSTLength(st.getLength());
-      
       if(sit->n() == 3)
 	Utils::getFermatSMT(st);
       else
@@ -244,7 +243,6 @@ void ESMT::findESMT(Delaunay &del,
       if(use_bg)
 	st.setBMSTLength(this->bgraph->getBMSTLength(st.getPoints()));
       st.computeRatios();
-      
       this->smts.push_back(st);
       // TODO disable sauages for now
       /*if(false && sit->map.size() == this->dim+1 && concat_subgraphs) {
@@ -262,7 +260,6 @@ void ESMT::findESMT(Delaunay &del,
 	}*/
     }
   }
-  
 #if(ESMT_COLLECT_STATS)
   this->stats.sub_trees_in_queue = this->smts.size();
 #endif
@@ -430,7 +427,9 @@ void ESMT::doConcatenateWithBottleneck(bool verbose) {
     // Try to recompute to find out
     double old_Blen = st.getBMSTLength();
     double new_Blen = this->bgraph->getBMSTLength(st.getPoints());
-    if(abs(old_Blen-new_Blen) < 0.000001) {
+    double diff = old_Blen-new_Blen;
+    diff = diff < 0.0 ? -diff : diff;
+    if(diff < 0.000001) {
       // It is up to date - insert
       this->concatAdd(st,sets);
       c += st.n()-1;

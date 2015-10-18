@@ -27,7 +27,7 @@ BottleneckGraphSleator::BottleneckGraphSleator(Graph &g)
     this->_vertices[i].cost     = 0;
     this->_vertices[i].maxcost  = 0;
   }
-  Utils::MSTKruskalMod(g, true);
+  Utils::MSTKruskalMod(g);
   // Traverse tree
   std::vector< std::vector<unsigned int> > conns(g.n());
   std::vector<Edge> &edges = g.getEdges();
@@ -37,6 +37,21 @@ BottleneckGraphSleator::BottleneckGraphSleator(Graph &g)
     conns[e.i1].push_back(e.i0);
   }
   this->pathDecompose(conns, 0, 0, NULL);
+}
+
+void BottleneckGraphSleator::info() {
+  for(unsigned int i = 0; i < this->_vertices.size(); i++)
+    std::cout << "path(" << i << ") = " << this->path(&this->_vertices[i])->idx << std::endl;
+  std::cout << std::endl;
+  for(unsigned int i = 0; i < this->_vertices.size(); i++) {
+    Vertex *par = this->parent(&this->_vertices[i]);
+    std::cout << "par(" << i << ") = ";
+    if(par) {
+      std::cout << par->idx << ", cost = "<<this->cost(&this->_vertices[i]) << std::endl;
+    }
+    else
+      std::cout << "NULL" << std::endl;
+  }
 }
 
 void BottleneckGraphSleator::pathDecompose(std::vector< std::vector<unsigned int> > conns,
@@ -98,15 +113,21 @@ void BottleneckGraphSleator::mergePoints(const std::vector<unsigned int> &points
     return;
   
   // Remove the bottleneck edges
-  for(unsigned int i=0; i<this->_vertices.size(); i++) {
-    this->evert(&this->_vertices[i]);
-    for(unsigned int j=i+1; j<this->_vertices.size(); j++) {
-      this->cut(&this->_vertices[j]);
+  for(unsigned int i=0; i<points.size(); i++) {
+    for(unsigned int j=i+1; j<points.size(); j++) {
+      this->evert(&this->_vertices[points[i]]);
+      Path *p = this->expose(&this->_vertices[points[j]]);
+      if(p == this->path(&this->_vertices[points[i]])) {
+	// Connected
+	Vertex *v = this->maxcost(&this->_vertices[points[j]]);
+	if(v) // Should never be null here
+	  this->cut(v);
+      }
     }
   }
   
-  for(unsigned int i=1; i<this->_vertices.size(); i++)
-    this->link(&this->_vertices[i-1], &this->_vertices[i], 0.0);
+  for(unsigned int i=1; i<points.size(); i++)
+    this->link(&this->_vertices[points[i-1]], &this->_vertices[points[i]], 0.0);
 }
 
 // Static tree operations
@@ -231,10 +252,14 @@ BottleneckGraphSleator::Vertex *BottleneckGraphSleator::pmaxcost(Path *p) {
   Vertex *r;
   Vertex *l;
   while(true) {
+    if(u->external)
+      break;
     rev = (rev != u->reversed);
     if(rev) { r = u->bleft;  l = u->bright; }
     else    { r = u->bright; l = u->bleft;  }
-    if(u->external || (r->external && l->external) || abs(u->maxcost-u->cost) <= 0.0001)
+    double diff = u->maxcost-u->cost;
+    diff = diff < 0.0 ? -diff : diff;
+    if(diff <= 0.0000001)
       // Edge has been found
       break;
     else
@@ -244,7 +269,7 @@ BottleneckGraphSleator::Vertex *BottleneckGraphSleator::pmaxcost(Path *p) {
     return NULL;
   // Return rightmost external descendant of l
   if(l->external) return l;
-  else if(rev) return l->bhead;
+  else if(rev != l->reversed) return l->bhead;
   else return l->btail;
 }
 void BottleneckGraphSleator::reverse(Path *p) {
@@ -437,6 +462,7 @@ void BottleneckGraphSleator::rotateright(Vertex *v) {
   v->height  = (lc->height > p->height ? lc->height : p->height)+1;
 }
 void BottleneckGraphSleator::balance(Vertex *v) {
+  return;
   int lh = v->bleft ? v->bleft->height : 0;
   int rh = v->bright ? v->bright->height : 0;
   int balance = lh-rh;
