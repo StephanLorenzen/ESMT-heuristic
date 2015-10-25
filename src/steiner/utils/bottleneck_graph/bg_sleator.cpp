@@ -126,8 +126,8 @@ void BottleneckGraphSleator::mergePoints(const std::vector<unsigned int> &points
   
   // Remove the bottleneck edges
   for(unsigned int i=0; i<points.size(); i++) {
+    this->evert(&this->_vertices[points[i]]);
     for(unsigned int j=i+1; j<points.size(); j++) {
-      this->evert(&this->_vertices[points[i]]);
       Path *p = this->expose(&this->_vertices[points[j]]);
       if(p == this->path(&this->_vertices[points[i]])) {
 	// Connected
@@ -137,12 +137,10 @@ void BottleneckGraphSleator::mergePoints(const std::vector<unsigned int> &points
       }
     }
   }
-  
-  for(unsigned int i=1; i<points.size(); i++) {
-    assert(this->path(&this->_vertices[points[i-1]]) != this->path(&this->_vertices[points[i]]));
-    this->evert(&this->_vertices[points[i-1]]);
-    this->link(&this->_vertices[points[i-1]], &this->_vertices[points[i]], 0.0);
-  }
+
+  this->evert(&this->_vertices[points[0]]);
+  for(unsigned int i=1; i<points.size(); i++)
+    this->link(&this->_vertices[points[0]], &this->_vertices[points[i]], 0.0);
 }
 
 // Static tree operations
