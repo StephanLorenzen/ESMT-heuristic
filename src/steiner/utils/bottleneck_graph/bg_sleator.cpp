@@ -39,9 +39,21 @@ BottleneckGraphSleator::BottleneckGraphSleator(Graph &g)
   this->pathDecompose(conns, 0, 0, NULL);
 }
 
+void BottleneckGraphSleator::treewalk(Vertex *v) {
+  v = this->head(this->path(v));
+  std::cout << v->idx;
+  while((v = this->after(v))) {std::cout << " "<<v->idx;}
+  std::cout << std::endl;
+}
+
 void BottleneckGraphSleator::info() {
-  for(unsigned int i = 0; i < this->_vertices.size(); i++)
-    std::cout << "path(" << i << ") = " << this->path(&this->_vertices[i])->idx << std::endl;
+  std::cout << "____________________________________________" << std::endl;
+  std::vector<int> a;
+  for(unsigned int i = 0; i < this->_vertices.size(); i++) {
+    std::cout << "path(" << i << ") = " << this->path(&this->_vertices[i])->idx << " ["<< this->path(&this->_vertices[i])<< "]  rev(path("
+	      << i << ")) = "<<this->path(&this->_vertices[i])->reversed<<"    path = ";
+    this->treewalk(this->path(&this->_vertices[i]));
+  }
   std::cout << std::endl;
   for(unsigned int i = 0; i < this->_vertices.size(); i++) {
     Vertex *par = this->parent(&this->_vertices[i]);
@@ -52,6 +64,7 @@ void BottleneckGraphSleator::info() {
     else
       std::cout << "NULL" << std::endl;
   }
+  std::cout << "____________________________________________" << std::endl;
 }
 
 void BottleneckGraphSleator::pathDecompose(std::vector< std::vector<unsigned int> > conns,
@@ -81,7 +94,6 @@ BottleneckGraphSleator::~BottleneckGraphSleator() {
   for(unsigned int i = 0; i < this->_vertices.size(); i++)
     if(this->_vertices[i].bparent)
       this->_cleanUp(this->path(&this->_vertices[i]));
-  
 }
 
 void BottleneckGraphSleator::_cleanUp(Vertex *v) {
@@ -126,8 +138,11 @@ void BottleneckGraphSleator::mergePoints(const std::vector<unsigned int> &points
     }
   }
   
-  for(unsigned int i=1; i<points.size(); i++)
+  for(unsigned int i=1; i<points.size(); i++) {
+    assert(this->path(&this->_vertices[points[i-1]]) != this->path(&this->_vertices[points[i]]));
+    this->evert(&this->_vertices[points[i-1]]);
     this->link(&this->_vertices[points[i-1]], &this->_vertices[points[i]], 0.0);
+  }
 }
 
 // Static tree operations
@@ -162,14 +177,17 @@ void BottleneckGraphSleator::evert(Vertex *v) {
 
 // Path operations
 BottleneckGraphSleator::Path *BottleneckGraphSleator::path(Vertex *v) {
+  assert(v);
   while(v->bparent)
     v = v->bparent;
   return v;
 }
 BottleneckGraphSleator::Vertex *BottleneckGraphSleator::head(Path *p) {
+  assert(p);
   return p->reversed ? p->btail : p->bhead;
 }
 BottleneckGraphSleator::Vertex *BottleneckGraphSleator::tail(Path *p) {
+  assert(p);
   return p->reversed ? p->bhead : p->btail;
 }
 BottleneckGraphSleator::Vertex *BottleneckGraphSleator::before(Vertex *v) {
@@ -276,10 +294,6 @@ void BottleneckGraphSleator::reverse(Path *p) {
   p->reversed = !p->reversed;
 }
 BottleneckGraphSleator::Path *BottleneckGraphSleator::concatenate(Path *p, Path *q, double x) {
-  if(p->dparent == q)
-    p->dparent = NULL;
-  if(q->dparent == p)
-    q->dparent = NULL;
   return this->construct(p, q, x);
 }
 void BottleneckGraphSleator::treepath(Vertex *v, Vertex **r, bool &reversed, bool before) {
@@ -307,16 +321,22 @@ void BottleneckGraphSleator::tsplit(Vertex *v, bool right, DestructResult &dr) {
   if(!dr.left)
     this->destruct(v, dr);
   else {
-    if(right)
+    if(right) {
+      v->bleft->bparent = NULL;
       dr.left = this->construct(v->bleft, dr.left, v->cost);
-    else
+    }
+    else {
+      v->bright->bparent = NULL;
       dr.right = this->construct(dr.right, v->bright, v->cost);
-    dr.left->reversed  = (dr.left->reversed != v->reversed);
-    dr.right->reversed = (dr.right->reversed != v->reversed);
+    }
+    
     if(v->reversed) {
       Vertex *tmp = dr.left;
       dr.left     = dr.right;
       dr.right    = tmp;
+      
+      dr.left->reversed  = !dr.left->reversed;
+      dr.right->reversed = !dr.right->reversed;
     }
     delete v;
   }
@@ -324,13 +344,14 @@ void BottleneckGraphSleator::tsplit(Vertex *v, bool right, DestructResult &dr) {
     this->tsplit(par, pright, dr);
 }
 void BottleneckGraphSleator::split(Vertex *v, SplitResult &res) {
-  Vertex *r = NULL;
-  bool rev = false;
   DestructResult dr1, dr2;
   dr1.left = NULL;
   dr1.right = NULL;
   dr2.left = NULL;
   dr2.right = NULL;
+  
+  Vertex *r = NULL;
+  bool rev = false;
   this->treepath(v, &r, rev, true);
   if(r)
     this->tsplit(r, false, dr1);
@@ -350,6 +371,7 @@ void BottleneckGraphSleator::split(Vertex *v, SplitResult &res) {
 // Splice and expose
 BottleneckGraphSleator::Path *BottleneckGraphSleator::splice(Path *p) {
   Vertex *v = this->tail(p)->dparent;
+  this->tail(p)->dparent = NULL;
   assert(v);
   SplitResult s;
   this->split(v, s);
@@ -357,9 +379,9 @@ BottleneckGraphSleator::Path *BottleneckGraphSleator::splice(Path *p) {
     this->tail(s.q)->dparent = v;
     this->tail(s.q)->dcost   = s.x;
   }
-  
   p = this->concatenate(p, this->path(v), this->tail(p)->dcost);
-  return s.r ? this->concatenate(p, s.r, s.y) : p;
+  p = s.r ? this->concatenate(p, s.r, s.y) : p;
+  return p;
 }
 BottleneckGraphSleator::Path *BottleneckGraphSleator::expose(Vertex *v) {
   Path *p;
@@ -370,60 +392,160 @@ BottleneckGraphSleator::Path *BottleneckGraphSleator::expose(Vertex *v) {
     this->tail(s.q)->dcost   = s.x;
   }
   p = s.r ? this->concatenate(this->path(v), s.r, s.y) : this->path(v);
-  while(this->tail(p)->dparent) p = this->splice(p);
+  while(this->tail(p)->dparent) {p = this->splice(p);}
   return p;
 }
   
 // AVL tree operations
 BottleneckGraphSleator::Vertex *BottleneckGraphSleator::construct(Vertex *v, Vertex *w, double x) {
-  Vertex *r = new Vertex;
-  r->bparent  = NULL;
-  r->bleft    = v;
-  v->bparent  = r;
-  r->bright   = w;
-  w->bparent  = r;
-  r->bhead    = this->head(v);
-  r->btail    = this->tail(w);
-  r->external = false;
-  r->reversed = false;
-  r->cost     = x;
-  r->maxcost  = v->maxcost > w->maxcost ? v->maxcost : w->maxcost;
-  r->maxcost  = r->maxcost > x ? r->maxcost : x;
-  r->idx      = this->head(v)->idx*10+this->tail(w)->idx;
-  
-  r->dparent  = NULL;
-  r->dcost    = 0.0;
+  int balance = v->height-w->height;
+  if(balance > 1) {
+    Vertex *u = v;
+    Vertex *tailw = this->tail(w);
+    bool rev = false;
+    while(u->height != w->height && u->height != w->height+1) {
+      this->unreverse(u);
+      u->btail = tailw;
+      u->maxcost = u->maxcost > w->maxcost ? u->maxcost : w->maxcost;
+      u->maxcost = u->maxcost > x ? u->maxcost : x; 
+      u = u->bright;
+    }
+    
+    // Replace u by new vertex
+    Vertex *r = new Vertex;
+    r->reversed = false;
+    r->external = false;
+    r->bparent  = u->bparent;
+    if(u->bparent) {
+      if(u->bparent->bleft == u)
+	u->bparent->bleft = r;
+      else
+	u->bparent->bright = r;
+    }
+    if(rev) {
+      r->bleft  = w;
+      r->bright = u;
+    }
+    else {
+      r->bleft  = u;
+      r->bright = w;
+    }
+    u->bparent  = r;
+    w->bparent  = r;
+    r->bhead    = this->head(r->bleft);
+    r->btail    = this->tail(r->bright);
+    r->cost     = x;
+    r->maxcost  = u->maxcost > w->maxcost ? u->maxcost : w->maxcost;
+    r->maxcost  = r->maxcost > x ? r->maxcost : x;
+    r->idx      = r->bhead->idx*10+r->btail->idx;
+    r->dparent  = NULL;
+    r->dcost    = 0.0;
+    r->height   = (u->height > w->height ? u->height : w->height) + 1;
+    
+    assert(this->is_balanced(r));
+    
+    // We must balance r's parent
+    this->balance(r->bparent);
+    
+    return v;
+  }
+  else if(balance < -1) {
+    Vertex *u = w;
+    Vertex *headv = this->head(v);
+    bool rev = false;
+    while(u->height != v->height && u->height != v->height+1) {
+      this->unreverse(u);
+      u->bhead = headv;
+      u->maxcost = u->maxcost > v->maxcost ? u->maxcost : v->maxcost;
+      u->maxcost = u->maxcost > x ? u->maxcost : x;
+      u = u->bleft;
+    }
+    // Replace u by new vertex
+    Vertex *r = new Vertex;
+    r->reversed = false;
+    r->external = false;
+    r->bparent  = u->bparent;
+    if(u->bparent) {
+      if(u->bparent->bleft == u)
+	u->bparent->bleft = r;
+      else
+	u->bparent->bright = r;
+    }
+    if(rev) {
+      r->bright = v;
+      r->bleft  = u;
+    }
+    else {
+      r->bright = u;
+      r->bleft  = v;
+    }
+    u->bparent  = r;
+    v->bparent  = r;
+    r->bhead    = this->head(r->bleft);
+    r->btail    = this->tail(r->bright);
+    r->cost     = x;
+    r->maxcost  = u->maxcost > v->maxcost ? u->maxcost : v->maxcost;
+    r->maxcost  = r->maxcost > x ? r->maxcost : x;
+    r->idx      = r->bhead->idx*10+r->btail->idx;
+    r->dparent  = NULL;
+    r->dcost    = 0.0;
+    r->height   = (u->height > v->height ? u->height : v->height) + 1;
+    
+    assert(this->is_balanced(r));
+    
+    // We must balance r's parent
+    this->balance(r->bparent);
 
-  r->height   = (v->height > w->height ? v->height : w->height) + 1;
-  this->balance(r);
-  return r;
+    return w;
+  }
+  else { // abs(balance) <= 1
+    Vertex *r = new Vertex;
+    r->reversed = false;
+    r->external = false;
+    r->bparent  = NULL;
+    r->bleft    = v;
+    v->bparent  = r;
+    r->bright   = w;
+    w->bparent  = r;
+    r->bhead    = this->head(v);
+    r->btail    = this->tail(w);
+    r->cost     = x;
+    r->maxcost  = w->maxcost > v->maxcost ? w->maxcost : v->maxcost;
+    r->maxcost  = r->maxcost > x ? r->maxcost : x;
+    r->idx      = this->head(v)->idx*10+this->tail(w)->idx;
+    r->dparent  = NULL;
+    r->dcost    = 0.0;
+    r->height   = (w->height > v->height ? w->height : v->height) + 1;
+    
+    assert(this->is_balanced(r));
+    // No balancing required
+
+    return r;
+  }
 }
 void BottleneckGraphSleator::destruct(Vertex *u, DestructResult &c) {
+  this->unreverse(u);
   c.left = u->bleft;
   c.left->bparent = NULL;
-  c.left->reversed = (c.left->reversed != u->reversed);
   c.right = u->bright;
   c.right->bparent = NULL;
-  c.right->reversed = (c.right->reversed != u->reversed);
   c.x = u->cost;
-  if(u->reversed) {
-    Vertex *tmp = c.left;
-    c.left = c.right;
-    c.right = tmp;
-  }
   delete u;
+  
   // Make sure subtrees are balanced (they should always be)
-  this->balance(c.left);
-  this->balance(c.right);
+  assert(this->is_balanced(c.left));
+  assert(this->is_balanced(c.right));
 }
 
 void BottleneckGraphSleator::rotateleft(Vertex *v) {
+  assert(v);
   Vertex *rc = v->bright;
-  if(!rc)
-    return;
+  assert(rc);
   Vertex *p = v->bleft;
   Vertex *q = rc->bleft;
   Vertex *r = rc->bright;
+  assert(p && q && r);
+  
   // Update v
   v->bleft   = rc;
   v->bright  = r;
@@ -435,17 +557,45 @@ void BottleneckGraphSleator::rotateleft(Vertex *v) {
   rc->bleft  = p;
   rc->bright = q;
 
+  // Update costs
+  double vc = v->cost;
+  v->cost   = rc->cost;
+  rc->cost  = vc;
+  
   // Update heights
   rc->height = (p->height > q->height ? p->height : q->height)+1;
   v->height  = (rc->height > r->height ? rc->height : r->height)+1;
+
+  // Update maxcost
+  rc->maxcost = (p->maxcost > q->maxcost ? p->maxcost : q->maxcost);
+  rc->maxcost = rc->cost > rc->maxcost ? rc->cost : rc->maxcost; 
+  
+  v->maxcost = r->maxcost > rc->maxcost ? r->maxcost : rc->maxcost;
+  v->maxcost = v->cost > v->maxcost ? v->cost : v->maxcost;
+  
+  // Update bhead and btail
+  if(!rc->external) {
+    // rc->reversed == false
+    assert(rc->bleft && rc->bright);
+    rc->btail = this->tail(rc->bright);
+    rc->bhead = this->head(rc->bleft);
+  }
+  if(!v->external) {
+    // v->reversed == false
+    assert(v->bleft && v->bright);
+    v->btail = this->tail(v->bright);
+    v->bhead = this->head(v->bleft);
+  }
 }
 void BottleneckGraphSleator::rotateright(Vertex *v) {
+  assert(v);
   Vertex *lc = v->bleft;
-  if(!lc)
-    return;
+  assert(lc);
   Vertex *p = lc->bleft;
   Vertex *q = lc->bright;
   Vertex *r = v->bright;
+  assert(p && q && r);
+  
   // Update v
   v->bleft   = p;
   v->bright  = lc;
@@ -457,46 +607,113 @@ void BottleneckGraphSleator::rotateright(Vertex *v) {
   lc->bleft  = q;
   lc->bright = r;
 
+  // Update costs
+  double vc = v->cost;
+  v->cost   = lc->cost;
+  lc->cost  = vc;
+  
   // Update heights
   lc->height = (q->height > r->height ? q->height : r->height)+1;
   v->height  = (lc->height > p->height ? lc->height : p->height)+1;
+  
+  // Update maxcost
+  lc->maxcost = q->maxcost > r->maxcost ? q->maxcost : r->maxcost;
+  lc->maxcost = lc->cost > lc->maxcost ? lc->cost : lc->maxcost; 
+  
+  v->maxcost = p->maxcost > lc->maxcost ? p->maxcost : lc->maxcost;
+  v->maxcost = v->cost > v->maxcost ? v->cost : v->maxcost;
+
+  // Update bhead and btail
+  if(!lc->external) {
+    // lc->reversed == false
+    assert(lc->bleft && lc->bright);
+    lc->btail = this->tail(lc->bright);
+    lc->bhead = this->head(lc->bleft);
+  }
+  if(!v->external) {
+    // v->reversed == false
+    assert(v->bleft && v->bright);
+    v->btail = this->tail(v->bright);
+    v->bhead = this->head(v->bleft);
+  }
+}
+void BottleneckGraphSleator::unreverse(Vertex *v) {
+  if(v->reversed && !v->external) {
+    v->reversed = false;
+    Vertex *tmp = v->bleft;
+    v->bleft    = v->bright;
+    v->bright   = tmp;
+    tmp = v->btail;
+    v->btail = v->bhead;
+    v->bhead = tmp;
+
+    v->bleft->reversed  = !v->bleft->reversed;
+    v->bright->reversed = !v->bright->reversed;
+  }
 }
 void BottleneckGraphSleator::balance(Vertex *v) {
-  return;
-  int lh = v->bleft ? v->bleft->height : 0;
-  int rh = v->bright ? v->bright->height : 0;
-  int balance = lh-rh;
-  if(balance <= 1 && balance >= -1)
+  if(!v || v->external)
     return;
+  assert(v->bleft && v->bright);
+  
+  // Update height, since we may simply be traversing
+  v->height = (v->bleft->height > v->bright->height ? v->bleft->height : v->bright->height) + 1; 
+  
+  int balance = this->balance_factor(v);
+  if(balance <= 1 && balance >= -1) {
+    // Just move up, updating heights as we go
+    this->balance(v->bparent);
+    return;
+  }
+  
+  // Debug check
+  assert(this->is_balanced(v->bleft));
+  assert(this->is_balanced(v->bright));
+  
   // Do rotate
+  this->unreverse(v);
   //      v
   //     / \        .
   //    /   \       .
   //   l     r
   //  / \   / \     .
   // a   b c   d
-  if(lh > rh) {
-    int la = v->bleft->bleft ? v->bleft->bleft->height : 0;
-    int lb = v->bleft->bright ? v->bleft->bright->height : 0;
-    balance = la-lb;
+  if(v->bleft->height > v->bright->height) {
+    this->unreverse(v->bleft);
+    this->unreverse(v->bleft->bright);
+    balance = this->balance_factor(v->bleft);
+    assert(balance >= -1 && balance <= 1);
     if(balance == -1) {
-      // Must rotate b up
+      // Must rotate left->right up
+      // Check first if we have to switch children
       this->rotateleft(v->bleft);
     }
     this->rotateright(v);
-    // Balance new b-right
-    this->balance(v->bright);
   }
-  else { // lh < rh
-    int lc = v->bright->bleft ? v->bright->bleft->height : 0;
-    int ld = v->bright->bright ? v->bright->bright->height : 0;
-    balance = lc-ld;
+  else { // lv->height < rv->height
+    this->unreverse(v->bright);
+    this->unreverse(v->bright->bleft);
+    balance = this->balance_factor(v->bright);
+    assert(balance >= -1 && balance <= 1);
     if(balance == 1) {
-      // Must rotate b up
+      // Must rotate right->left up
+      // Check first if we have to switch children
       this->rotateright(v->bright);
     }
-    this->rotateleft(v);
-    // Balance new b-right
-    this->balance(v->bleft);
+    this->rotateleft(v); 
   }
+  assert(this->is_balanced(v));
+  // Balance the parent
+  this->balance(v->bparent);
+}
+
+
+int BottleneckGraphSleator::balance_factor(Vertex *v) {
+  unsigned int a = v->bleft ? v->bleft->height : 0,
+    b = v->bright ? v->bright->height : 0;
+  return a-b;
+}
+
+bool BottleneckGraphSleator::is_balanced(Vertex *v) {
+  return abs(this->balance_factor(v)) <= 1;
 }
