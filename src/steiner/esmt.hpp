@@ -108,6 +108,8 @@ public:
     unsigned int no_of_sp_post_optimisation;
     // Overlapping (very close) SPs after post-optimisation
     unsigned int no_of_sp_overlapping;
+    // STs added in the concatenation
+    std::vector<SteinerTree> fsts;
   };
 
   /**

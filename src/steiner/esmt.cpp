@@ -304,7 +304,7 @@ void ESMT::findESMT(Delaunay &del,
   this->computeRatios();
 
 #if(ESMT_COLLECT_STATS)
-  this->stats.no_of_sp = this->s;
+  this->stats.no_of_sp = this->S;
 #endif
 
   if(post_optimise) {
@@ -392,6 +392,9 @@ void ESMT::doConcatenate(bool verbose) {
     SteinerTree &st = this->queue->extract();
     if(this->concatCheck(st,sets,flags)) {
       this->concatAdd(st,sets);
+#if(ESMT_COLLECT_STATS)
+      this->stats.fsts.push_back(st);
+#endif
       c += st.n()-1;
       if(c >= this->n())
 	break;
@@ -439,6 +442,9 @@ void ESMT::doConcatenateWithBottleneck(bool verbose) {
     if(diff < 0.000001) {
       // It is up to date - insert
       this->concatAdd(st,sets);
+#if(ESMT_COLLECT_STATS)
+      this->stats.fsts.push_back(st);
+#endif
       c += st.n()-1;
       if(c >= this->n())
 	break;
@@ -853,10 +859,10 @@ void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
     }
 
 #if(ESMT_COLLECT_STATS)
-    //unsigned int size = components[prevSet].map.size();
-    //while(this->stats.covered_faces.size() < size+1)
-    //  this->stats.covered_faces.push_back(0);
-    //this->stats.covered_faces[size]++;
+    unsigned int size = prevSet.n();
+    while(this->stats.covered_faces.size() < size+1)
+      this->stats.covered_faces.push_back(0);
+    this->stats.covered_faces[size]++;
 #endif
   }
   else
@@ -958,7 +964,7 @@ void ESMT::buildSausage(std::vector<unsigned int> &prevSet,
     return;
   
 #if(ESMT_COLLECT_STATS)
-  unsigned int size = prevTree.n+1;
+  unsigned int size = prevTree.n()+1;
   while(this->stats.covered_faces.size() < size+1)
     this->stats.covered_faces.push_back(0);
   this->stats.covered_faces[size]++;
@@ -1061,7 +1067,7 @@ void ESMT::buildSausageReverse(std::vector<unsigned int> &prevSet,
     return;
 
 #if(ESMT_COLLECT_STATS)
-  unsigned int size = prevTree.n+1;
+  unsigned int size = prevTree.n()+1;
   while(this->stats.covered_faces.size() < size+1)
     this->stats.covered_faces.push_back(0);
   this->stats.covered_faces[size]++;

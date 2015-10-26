@@ -34,3 +34,4 @@ doc/latex
 src/test/test_results
 src/steiner/utils/qhull/*
 data/RSMT-cancer
+src/drawings
