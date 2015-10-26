@@ -112,13 +112,18 @@ void ESMT::findESMT(Delaunay &del,
 		    bool special_concat,
 		    unsigned int use_bg,
 		    bool verbose) {
-  unsigned int i,bits;
+  unsigned int i, j, bits;
   this->bgraph = NULL;
   
   assert(sh);
   this->dim = del.dimension();
   this->N = this->n();
-  
+
+  // Don't concat subgraphs if use_bg is set
+  concat_subgraphs = concat_subgraphs && !use_bg;
+  // Don't use special concat if use_bg is set
+  special_concat   = special_concat && !use_bg;
+
   if(use_bg) {
     // Don't do special concat if use_bg
     special_concat = false;
@@ -211,7 +216,7 @@ void ESMT::findESMT(Delaunay &del,
   this->smts.reserve(this->components.size());
 
   std::vector< Graph >::iterator sit;  
-  for(sit = this->components.begin(); sit != this->components.end(); sit++) {
+  for(sit = this->components.begin(), i=0; sit != this->components.end(); sit++, i++) {
     if(sit->n() == 2) {
       std::vector<Edge> edges;
       edges.push_back(Edge(0,1));
@@ -244,20 +249,22 @@ void ESMT::findESMT(Delaunay &del,
 	st.setBMSTLength(this->bgraph->getBMSTLength(st.getPoints()));
       st.computeRatios();
       this->smts.push_back(st);
-      // TODO disable sauages for now
-      /*if(false && sit->map.size() == this->dim+1 && concat_subgraphs) {
-	int simplex = sit->simplex_index;
-	std::vector<int> map;
-	for(i = 0; i < (*this->simplices)[simplex].n; i++)
-	  map.push_back((*this->simplices)[simplex].map[i]);
-	for(i = 0; i < map.size(); i++) {
+      
+      if(sit->n() == this->dim+1 && concat_subgraphs) {
+	unsigned int simplex = this->simplex_id[i];
+	
+	std::vector<unsigned int> map;
+	for(j = 0; j < this->simplices[simplex].n; j++)
+	  map.push_back(this->simplices[simplex].map[j]);
+	
+	for(j = 0; j < map.size(); j++) {
 	  // Swap first element with i
-	  int tmp = map[0];
-	  map[0]  = map[i];
-	  map[i]  = tmp;
-	  this->buildSausage(map, subst, 0, i, simplex, simplex, 1);
+	  unsigned int tmp = map[0];
+	  map[0]           = map[j];
+	  map[j]           = tmp;
+	  this->buildSausage(map, st, 0, j, simplex, simplex, 1);
 	}
-	}*/
+      }
     }
   }
 #if(ESMT_COLLECT_STATS)
@@ -896,55 +903,60 @@ void ESMT::findAllFaces(Delaunay &del) {
   }
 }
 
-/*void ESMT::buildSausage(std::vector<int> &prevSet,
-			SubST &prevTree,
+void ESMT::buildSausage(std::vector<unsigned int> &prevSet,
+			SteinerTree &prevTree,
 			unsigned int added,
 			unsigned int next_simplex_index,
-			int cur_simplex,
-			int org_simplex,
+			unsigned int cur_simplex,
+			unsigned int org_simplex,
 			unsigned int c) {
   unsigned int i, j, z;
   double d_mst_length = 0.0;
-
-  Simplex *cur  = &(*this->simplices)[cur_simplex];
-  int next_vertex = cur->nextVertex[next_simplex_index];
-  int next_simplex = cur->nextSimplex[next_simplex_index];
-
+  
+  Simplex &cur = this->simplices[cur_simplex];
+  
   // Check for neighbour?
-  if(next_vertex < 0)
+  if(cur.nextVertex[next_simplex_index] < 0)
     return;
-
-  Simplex *next = &(*this->simplices)[next_simplex];
-
+  
+  // Now cast to unsigned
+  unsigned int next_vertex  = cur.nextVertex[next_simplex_index];
+  unsigned int next_simplex = cur.nextSimplex[next_simplex_index];
+  
+  Simplex &next = this->simplices[next_simplex];
+  
   // Detect if we are connected - must have at least c connections
-  for(i = 0; i < cur->n; i++)
-    if(this->isInMST(cur->map[i], next_vertex)) {
+  for(i = 0; i < cur.n; i++)
+    if(this->isInMST(cur.map[i], next_vertex)) {
       c--;
-      d_mst_length += Utils::length(this->points[cur->map[i]], this->points[next_vertex]);
+      d_mst_length += Utils::length(this->getPoint(cur.map[i]), this->getPoint(next_vertex));
     }
   if(c > 0)
-    // Stop - but we may have to look in other direction here!
+    // Stop
     return;
+  
   // Check if we are adding a duplet.
   for(i = 0; i < prevSet.size(); i++)
     if(prevSet[i] == next_vertex)
       return;
   // Check if the sharing facet has d edges in MST
   c = 0;
-  for(i = 0; i < cur->n; i++)
-    if(i != next_simplex_index && this->isInMST(cur->map[i],cur->map[next_simplex_index]))
+  for(i = 0; i < cur.n; i++)
+    if(i != next_simplex_index && this->isInMST(cur.map[i], cur.map[next_simplex_index]))
       c++;
+  
   if(c == 1 && next_simplex < cur_simplex)
     return;
-  std::vector<int> curSet = prevSet;
+    
+  std::vector<unsigned int> curSet = prevSet;
   curSet.push_back(next_vertex);
   // Is connected. Calculate ST and add.
-  SteinerTree *st = this->iterCon.insertTerminal(prevTree.st, this->points[next_vertex], prevTree.st->getMSTLength()+d_mst_length);
-  if(st->getSteinerRatio() >= 1.0) {
-    delete st;
+  SteinerTree st = prevTree;
+  this->iterCon.insertTerminal(st, next_vertex, prevTree.getMSTLength()+d_mst_length);
+  st.computeRatios();
+  if(st.getSteinerRatio() >= 1.0)
     return;
-  }
-
+  
 #if(ESMT_COLLECT_STATS)
   unsigned int size = prevTree.n+1;
   while(this->stats.covered_faces.size() < size+1)
@@ -952,8 +964,7 @@ void ESMT::findAllFaces(Delaunay &del) {
   this->stats.covered_faces[size]++;
 #endif
 
-  SubST subst(st, prevTree.n, prevTree.map, next_vertex);
-  this->smts.push_back(subst);  
+  this->smts.push_back(st);
   added += 1;
   // We build from the largest index, so we have to choose the
   // simplex on the face with the last dim points from cur-set.
@@ -964,62 +975,66 @@ void ESMT::findAllFaces(Delaunay &del) {
   z = curSet.size()-(this->dim+1);
   for(i = z; i < z+c; i++) {
     // Swap first element with i
-    int tmp   = curSet[z];
-    curSet[z] = curSet[i];
-    curSet[i] = tmp;
+    unsigned int tmp = curSet[z];
+    curSet[z]        = curSet[i];
+    curSet[i]        = tmp;
     // Get index (j) for next simplex
-    for(j = 0; j < next->n; j++)
-      if(next->map[j] == curSet[z])
+    for(j = 0; j < next.n; j++) {
+      if(next.map[j] == curSet[z])
 	break;
-    // Now, next vertex is in next->nextVertex[j]. Recursive call now
+    }
+    assert(j < next.n);
+    // Now, next vertex is in next.nextVertex[j]. Recursive call now
     // if next simplex is less than bound.
-    this->buildSausage(curSet, subst, added, j, next_simplex, org_simplex, 1);
+    this->buildSausage(curSet, st, added, j, next_simplex, org_simplex, 1);
   }
+  
   // We have to start the concatenation in the other direction.
   // prevSet[0..(added-1)] contains the set indices, which must be respected.
   // If(added==dim+1), direction is uniqly determined, otherwise, we must make
   // A permutation of prevSet[added..dim]. First exit will be prevSet[dim].
-  int start = curSet[0];
+  unsigned int start = curSet[0];
   // Do not build if neighbour point is <= start
   for(i = this->dim; i >= added; i--) {
     if(curSet[i] <= start)
       continue;
-    int tmp           = curSet[this->dim];
+    unsigned int tmp  = curSet[this->dim];
     curSet[this->dim] = curSet[i];
     curSet[i]         = tmp;
     // Get index (j) for next simplex
-    for(j = 0; j < (*this->simplices)[org_simplex].n; j++)
-      if((*this->simplices)[org_simplex].map[j] == curSet[this->dim])
+    for(j = 0; j < this->simplices[org_simplex].n; j++)
+      if(this->simplices[org_simplex].map[j] == curSet[this->dim])
 	break;
     // j is now index of the next connection
-    this->buildSausageReverse(curSet, subst, added, 0, j, org_simplex);
-    }
-}*/
+    this->buildSausageReverse(curSet, st, added, 0, j, org_simplex);
+  }
+}
 
-/*void ESMT::buildSausageReverse(std::vector<int> &prevSet,
-			       SubST &prevTree,
+void ESMT::buildSausageReverse(std::vector<unsigned int> &prevSet,
+			       SteinerTree &prevTree,
 			       unsigned int prev_added,
 			       unsigned int added,
 			       unsigned int next_simplex_index,
-			       int cur_simplex) {
+			       unsigned int cur_simplex) {
   unsigned int i, j, z, c;
   double d_mst_length = 0.0;
-  Simplex *cur  = &(*this->simplices)[cur_simplex];
-  int next_vertex = cur->nextVertex[next_simplex_index];
-  int next_simplex = cur->nextSimplex[next_simplex_index];
+  Simplex &cur     = this->simplices[cur_simplex];
   // Check for neighbour?
-  if(next_vertex < 0)
+  if(cur.nextVertex[next_simplex_index] < 0)
     return;
-
-  Simplex *next = &(*this->simplices)[next_simplex];
+  // Cast is now ok
+  unsigned int next_vertex  = cur.nextVertex[next_simplex_index];
+  unsigned int next_simplex = cur.nextSimplex[next_simplex_index];
+  
+  Simplex &next = this->simplices[next_simplex];
 
   // Detect if we are connected - must have at least 1 connection
-  for(i = 0; i < cur->n; i++)
-    if(this->isInMST(cur->map[i], next_vertex)) {
-      d_mst_length = Utils::length(this->points[cur->map[i]], this->points[next_vertex]);
+  for(i = 0; i < cur.n; i++)
+    if(this->isInMST(cur.map[i], next_vertex)) {
+      d_mst_length = Utils::length(this->getPoint(cur.map[i]), this->getPoint(next_vertex));
       break;
     }
-  if(i >= cur->n)
+  if(i >= cur.n)
     // Not connected
     return;
   // Check if we are adding a duplet.
@@ -1028,23 +1043,22 @@ void ESMT::findAllFaces(Delaunay &del) {
       return;
   // Check if the sharing facet has d edges in MST
   c = 0;
-  for(i = 0; i < cur->n; i++)
-    if(i != next_simplex_index && this->isInMST(cur->map[i],cur->map[next_simplex_index]))
+  for(i = 0; i < cur.n; i++)
+    if(i != next_simplex_index && this->isInMST(cur.map[i],cur.map[next_simplex_index]))
       c++;
   if(c == 1 && next_simplex < cur_simplex)
     return;
   // Is connected. Calculate ST and add.
-  std::vector<int> curSet;
+  std::vector<unsigned int> curSet;
   // Push front because of reverse build
   curSet.reserve(prevSet.size()+1);
   curSet.push_back(next_vertex);
   curSet.insert(curSet.end(), prevSet.begin(), prevSet.end());
-  SteinerTree *st = this->iterCon.insertTerminal(prevTree.st, this->points[next_vertex], prevTree.st->getMSTLength()+d_mst_length);
+  SteinerTree st = prevTree;
+  this->iterCon.insertTerminal(st, next_vertex, prevTree.getMSTLength()+d_mst_length);
 
-  if(st->getSteinerRatio() >= 1.0) {
-    delete st;
+  if(st.getSteinerRatio() >= 1.0)
     return;
-  }
 
 #if(ESMT_COLLECT_STATS)
   unsigned int size = prevTree.n+1;
@@ -1052,9 +1066,8 @@ void ESMT::findAllFaces(Delaunay &del) {
     this->stats.covered_faces.push_back(0);
   this->stats.covered_faces[size]++;
 #endif
-
-  SubST subst(st, prevTree.n, prevTree.map, next_vertex);
-  this->smts.push_back(subst);
+  
+  this->smts.push_back(st);
   added += 1;
   // We now build in reverse. Given curSet of the form:
   // curSet[0..(1st index)..((d+1)th index)..n]
@@ -1065,18 +1078,18 @@ void ESMT::findAllFaces(Delaunay &del) {
   z = this->dim;
   for(i = this->dim; i >= c; i--) {
     // Swap first element with i
-    int tmp   = curSet[z];
-    curSet[z] = curSet[i];
-    curSet[i] = tmp;
+    unsigned int tmp = curSet[z];
+    curSet[z]        = curSet[i];
+    curSet[i]        = tmp;
     // Get index (j) for next simplex
-    for(j = 0; j < next->n; j++)
-      if(next->map[j] == curSet[z])
+    for(j = 0; j < next.n; j++)
+      if(next.map[j] == curSet[z])
 	break;
     // Now, next vertex is in next->nextVertex[j]. Recursive call now
     // if next simplex is less than bound.
-    this->buildSausageReverse(curSet, subst, prev_added, added, j, next_simplex);
-    }
-}*/
+    this->buildSausageReverse(curSet, st, prev_added, added, j, next_simplex);
+  }
+}
 
 /* Stats constructor */
 ESMT::Stats::Stats() {

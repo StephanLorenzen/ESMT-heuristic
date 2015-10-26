@@ -73,7 +73,7 @@ namespace Utils {
       ~Simplex();
       
       unsigned int n;
-      int *map;
+      unsigned int *map;
       int *nextSimplex;
       int *nextVertex;
     };

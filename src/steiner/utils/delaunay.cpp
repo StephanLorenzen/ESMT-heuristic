@@ -237,7 +237,7 @@ void Utils::Delaunay::findFacesRec(Simplex &simplex, std::vector<unsigned int> &
   int last = n > 0 ? cur_set.back() : -1;
   for(i = 0; i < simplex.n; i++) {
     // Add only larger than
-    if(simplex.map[i] > last) {
+    if((int)simplex.map[i] > last) {
       std::vector<unsigned int> new_set = cur_set;
       new_set.push_back(simplex.map[i]);
       this->findFacesRec(simplex, new_set, flag);
@@ -252,7 +252,7 @@ void Utils::Delaunay::findFacesRec(Simplex &simplex, std::vector<unsigned int> &
 /* Constructor */
 Simplex::Simplex(int d)  {
   this->n   = d+1;
-  this->map = new int[d+1];
+  this->map = new unsigned int[d+1];
   this->nextSimplex = new int[d+1];
   this->nextVertex  = new int[d+1];
 }
@@ -260,7 +260,7 @@ Simplex::Simplex(int d)  {
 /* Copy constructor */
 Simplex::Simplex(const Simplex &s)  {
   this->n           = s.n;
-  this->map         = new int[s.n];
+  this->map         = new unsigned int[s.n];
   this->nextSimplex = new int[s.n];
   this->nextVertex  = new int[s.n];
   std::copy(&s.map[0], &s.map[0]+s.n, &this->map[0]);

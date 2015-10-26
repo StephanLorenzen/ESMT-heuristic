@@ -135,14 +135,12 @@ void IterativeConcat::findSteinerPoints(SteinerTree &subgraph) {
   subgraph.setSMTLength(subgraph.getLength());
 }
 
-void IterativeConcat::insertTerminal(SteinerTree &fst, Point& p,
-				     double mst_length) {
+void IterativeConcat::insertTerminal(SteinerTree &fst, unsigned int pi, double mst_length) {
   unsigned int i, j, m, n, s, i0, i1, is0, is1;
   double tmp, l = -1.0;
-  
-  this->dim = fst.dimension();
-  assert(this->dim == p.dim());
 
+  this->dim = fst.dimension();
+  
   n = fst.n();
   s = fst.s();
   m = n+s;
@@ -155,14 +153,20 @@ void IterativeConcat::insertTerminal(SteinerTree &fst, Point& p,
     this->P.push_back(fst.getPoint(i));
   
   // Check for full tree
-  assert(m == i*2-2);
+  assert(m == n*2-2);
   this->N = i+1;
   this->S = i-2;
-  // New terminal
-  this->P[i] = p;
+  // New terminal - add to fst and this->P
+  fst.getPoints().push_back(pi);
+  Point &p = fst.getPoint(fst.n()-1);
+  this->P.push_back(p);
+  
   // Current Steiner points
   for(; i < m; i++)
-    this->P[i+1] = fst.getPoint(i);
+    this->P.push_back(fst.getPoint(i));
+  
+  // Add dummy for last
+  this->P.push_back(Point(this->dim));
   
   for(i = 0; i < this->S; i++)
     for(j = 0; j < 3; j++)

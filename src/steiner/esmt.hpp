@@ -282,14 +282,14 @@ private:
    * @param c                    The number of needed connections in MST for next
    *                             point.
    */
-  /*void buildSausage(std::vector<int> &prevSet,
-		    ESMT::SubST &prevTree,
+  void buildSausage(std::vector<unsigned int> &prevSet,
+		    SteinerTree &prevTree,
 		    unsigned int added,
 		    unsigned int next_simplex_index,
-		    int cur_simplex,
-		    int org_simplex,
+		    unsigned int cur_simplex,
+		    unsigned int org_simplex,
 		    unsigned int c);
-  */
+  
   /**
    * Builds sausages recursively in the other direction.
    *
@@ -302,13 +302,13 @@ private:
    * @param next_simplex_index   Neighbouring index of next simplex for cur_simplex.
    * @param cur_simplex          Index of current simplex in simplices.
    */
-  /*void buildSausageReverse(std::vector<int> &prevSet,
-			   ESMT::SubST &prevTree,
+  void buildSausageReverse(std::vector<unsigned int> &prevSet,
+			   SteinerTree &prevTree,
 			   unsigned int prev_added,
 			   unsigned int added,
 			   unsigned int next_simplex_index,
-			   int cur_simplex);
-  */
+			   unsigned int cur_simplex);
+  
 
   /**
    * Checks if the edge between i0 and i1 is in the MST.

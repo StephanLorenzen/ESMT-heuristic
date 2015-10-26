@@ -32,12 +32,12 @@ public:
    * Inserts a terminal in a full Steiner tree.
    *
    * @param fst         A pointer to the full Steiner tree.
-   * @param p           The terminal to be inserted.
+   * @param pi          The index of the terminal to be inserted.
    * @param mst_length  The mst_length of the new tree.
    *
    * @return      The (allocated) resulting SteinerTree
    */
-  void insertTerminal(SteinerTree &fst, Utils::Point &p, double mst_length);
+  void insertTerminal(SteinerTree &fst, unsigned int pi, double mst_length);
   
 protected:
 private:
