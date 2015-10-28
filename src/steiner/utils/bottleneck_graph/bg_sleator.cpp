@@ -29,14 +29,12 @@ BottleneckGraphSleator::BottleneckGraphSleator(Graph &g)
   }
   Utils::MSTKruskalMod(g);
   // Traverse tree
-  std::vector< std::vector<unsigned int> > conns(g.n());
   std::vector<Edge> &edges = g.getEdges();
   for(unsigned int i = 0; i < edges.size(); i++) {
     Edge e = edges[i];
-    conns[e.i0].push_back(e.i1);
-    conns[e.i1].push_back(e.i0);
+    this->evert(&this->_vertices[e.i0]);
+    this->link(&this->_vertices[e.i0], &this->_vertices[e.i1], e.length);
   }
-  this->pathDecompose(conns, 0, 0, NULL);
 }
 
 void BottleneckGraphSleator::treewalk(Vertex *v) {
@@ -65,25 +63,6 @@ void BottleneckGraphSleator::info() {
       std::cout << "NULL" << std::endl;
   }
   std::cout << "____________________________________________" << std::endl;
-}
-
-void BottleneckGraphSleator::pathDecompose(std::vector< std::vector<unsigned int> > conns,
-					   unsigned int cur, unsigned int prev, Path *path) {
-  if(path)
-    path = this->concatenate(&this->_vertices[cur], path, Utils::length(this->_pointsRef[cur], this->_pointsRef[prev]));
-  else {
-    path = &this->_vertices[cur];
-    if(cur != 0) {
-      path->dparent = &this->_vertices[prev];
-      path->dcost   = Utils::length(this->_pointsRef[cur], this->_pointsRef[prev]);
-    }
-  }
-  for(unsigned int i = 0; i < conns[cur].size(); i++) {
-    if(conns[cur][i] != prev) {
-      this->pathDecompose(conns, conns[cur][i], cur, path);
-      path = NULL;
-    }
-  }
 }
 
 /*

@@ -78,10 +78,7 @@ private:
   void treewalk(Vertex *v);
   
   void _cleanUp(Vertex *v);
-
-  void pathDecompose(std::vector< std::vector<unsigned int> > conns,
-		     unsigned int cur, unsigned int prev, Path *path);
-
+  
   // Static tree operations
   Vertex *parent(Vertex *v);
   Vertex *root(Vertex *v);
