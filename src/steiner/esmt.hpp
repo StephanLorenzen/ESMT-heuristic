@@ -34,18 +34,9 @@ public:
   /**
    * Constructs an approximated eucliedean Steiner minimal tree, using
    * the algorithm described in our report.
-   * Uses Smith's iterative algorithm for subgraphs and concates tetrahedrons.
    *
-   * @param points          The given point set
-   */
-  ESMT(std::vector<Utils::Point> &points);
-
-  /**
-   * Constructs an approximated eucliedean Steiner minimal tree, using
-   * the algorithm described in our report.
-   *
-   * @param points          The given point set
-   * @param sh              A pointer to a subgraph heuristic.
+   * @param points             The given point set
+   * @param sh                 A pointer to a subgraph heuristic.
    * @param concat_subgraphs   Determines wether subgraph concatenation should be
    *                           done.
    * @param post_optimise      Determines wether post optimisation using Smith's
@@ -63,9 +54,9 @@ public:
    * the algorithm described in our report. This constructor takes a Delaunay
    * triangulation as input, to skip this step in the algorithm.
    *
-   * @param del             The Delaunay data structure. The algorithm will
-   *                        use the dimension of this datastructure.
-   * @param sh              A pointer to a subgraph heuristic.
+   * @param del                The Delaunay data structure. The algorithm will
+   *                           use the dimension of this datastructure.
+   * @param sh                 A pointer to a subgraph heuristic.
    * @param concat_subgraphs   Determines wether subgraph concatenation should be
    *                           done.
    * @param post_optimise      Determines wether post optimisation using Smith's
@@ -143,67 +134,34 @@ private:
    * Performs the ESMT algorithm.
    *
    * @param points             The given point set
-   * @param sh                 A pointer to a subgraph heuristic.
-   * @param concat_subgraphs   Determines wether subgraph concatenation should be
-   *                           done.
-   * @param post_optimise      Determines wether post optimisation using Smith's
-   *                           should be applied
-   * @param special_concat     Redo concatenation, adding non-covered faces.
-   * @param verbose            If true, stats will be printed.
    */
-  void findESMT(std::vector<Utils::Point> &points,
-		SubgraphHeuristic *sh,
-		bool concat_subgraphs,
-		bool post_optimise,
-		bool special_concat,
-		unsigned int use_bg,
-		bool verbose = false);
+  void findESMT(std::vector<Utils::Point> &points);
 
   /**
    * Performs the ESMT algorithm.
    *
-   * @param del             A Delaunay triangulation structure
-   * @param sh              A pointer to a subgraph heuristic.
-   * @param concat_subgraphs   Determines wether subgraph concatenation should be
-   *                           done.
-   * @param post_optimise      Determines wether post optimisation using Smith's
-   *                           should be applied
-   * @param special_concat     Redo concatenation, adding non-covered faces.
-   * @param verbose            If true, stats will be printed.
+   * @param del                A Delaunay triangulation structure
    */
-  void findESMT(Utils::Delaunay &del,
-		SubgraphHeuristic *sh,
-		bool concat_subgraphs,
-		bool post_optimise,
-		bool special_concat,
-		unsigned int use_bg,
-		bool verbose = false);
+  void findESMT(Utils::Delaunay &del);
   
   /**
    * Performs the concatenation step of the algorithm.
    * Assumes this->queue to contain all sub-trees in order by ratio.
-   *
-   * @param verbose       If true, stats will be printed
    */
-  void doConcatenate(bool verbose = false);
+  void doConcatenate();
 
   /**
    * Performs the concatenation step of the algorithm, using the given bottleneck graph
    * for MST lengths.
    * Assumes that this->queue contains all sub-trees in order by b-ratio.
-   * 
-   * @param verbose       If true, stats will be printed
    */
-  void doConcatenateWithBottleneck(bool verbose = false);
+  void doConcatenateWithBottleneck();
   
   /**
    * Performs the concatenation step of the algorithm repeatedly, using the redo technic.
    * Assumes that this->queue contains all sub-trees in order by ratio.
-   * 
-   * @param sh            Subgraph heuristic for finding STs of non-covered simplices
-   * @param verbose       If true, stats will be printed
    */
-  void doConcatenateWithRedo(SubgraphHeuristic &sh, bool verbose = false);
+  void doConcatenateWithRedo();
 
   /**
    * Checks if the given SteinerTree can be added
@@ -270,6 +228,17 @@ private:
    * @param del  The Delaunay triangulation.
    */
   void findAllFaces(Utils::Delaunay &del);
+
+  /**
+   * Recursive part of procedure findAllFaces.
+   *
+   * @param simplex  the current simplex
+   * @param cur_set  the current face
+   * @param flag     flag map indicating which faces have been added.
+   */
+  void findAllFacesRec(Utils::Delaunay::Simplex &simplex, std::vector<unsigned int> &cur_set,
+		       std::unordered_map<unsigned long, bool> &flag);
+    
 
   /**
    * Builds sausages recursively.
@@ -373,11 +342,15 @@ private:
   /** Iterative concat used for sausage construction */
   IterativeConcat iterCon;
 
-  /** Iterative Smith used for recomputing FSTs */
-  IterativeSmith iterSmith;
+  /** SubgraphHeuristic */
+  SubgraphHeuristic *sh;
 
   /** BottleneckGraph object */
   BottleneckGraph *bgraph;
+
+  /** Configurations */
+  bool concat_subgraphs, post_optimise, special_concat, verbose;
+  unsigned int use_bg;
 };
 
 #endif // ESMT_H

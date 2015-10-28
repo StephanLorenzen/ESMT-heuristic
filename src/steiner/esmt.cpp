@@ -37,27 +37,17 @@ typedef Utils::Heap<SteinerTree>          Queue;
 /*
  * Constructor
  */
-ESMT::ESMT(std::vector<Point> &points)
-  : SteinerTree(points), Iterative(points[0].dim(), points.size()),
-    iterCon(points[0].dim()), iterSmith(points[0].dim())
-{
-  SubgraphHeuristic *sh = new IterativeSmith(points[0].dim());
-  this->findESMT(points, sh, true, true, 0, false);
-  delete sh;
-}
-
-/*
- * Constructor
- */
 ESMT::ESMT(std::vector<Point> &points, SubgraphHeuristic *sh,
 	   bool concat_subgraphs, bool post_optimise, bool special_concat,
 	   unsigned int use_bg, bool verbose)
   : SteinerTree(points), Iterative(points[0].dim(), points.size()),
-    iterCon(points[0].dim()), iterSmith(points[0].dim())
+    iterCon(points[0].dim()), sh(sh), concat_subgraphs(concat_subgraphs),
+    post_optimise(post_optimise), special_concat(special_concat), verbose(verbose),
+    use_bg(use_bg)
 {
   if(verbose)
     std::cout << "*** ESMT Heuristic ***" << std::endl;
-  this->findESMT(points, sh, concat_subgraphs, post_optimise, special_concat, use_bg, verbose);
+  this->findESMT(points);
   if(verbose)
     std::cout << "**********************" << std::endl;
 }
@@ -69,12 +59,13 @@ ESMT::ESMT(Utils::Delaunay &del, SubgraphHeuristic *sh,
 	   bool concat_subgraphs, bool post_optimise, bool special_concat,
 	   unsigned int use_bg, bool verbose)
   : SteinerTree(del.getPointsRef()), Iterative(del.dimension(), del.getPoints().size()),
-    iterCon(del.dimension()), iterSmith(del.dimension())
+    iterCon(del.dimension()), sh(sh), concat_subgraphs(concat_subgraphs),
+    post_optimise(post_optimise), special_concat(special_concat), verbose(verbose),
+    use_bg(use_bg)
 {
   if(verbose)
     std::cout << "*** ESMT Heuristic ***" << std::endl;
-
-  this->findESMT(del, sh, concat_subgraphs, post_optimise, special_concat, use_bg, verbose);
+  this->findESMT(del);
   if(verbose)
     std::cout << "**********************" << std::endl;
 }
@@ -90,43 +81,26 @@ std::vector<SteinerTree> &ESMT::getComponents() {
 /*
  * Implementation of findESMT(...)
  */
-void ESMT::findESMT(std::vector<Point> &points,
-		    SubgraphHeuristic *sh,
-		    bool concat_subgraphs,
-		    bool post_optimise,
-		    bool special_concat,
-		    unsigned int use_bg,
-		    bool verbose) {
+void ESMT::findESMT(std::vector<Point> &points) {
   // Do Delaunay
   Delaunay del(points);
-  this->findESMT(del, sh, concat_subgraphs, post_optimise, special_concat, use_bg, verbose);
+  this->findESMT(del);
 }
 
 /*
  * Implementation of findESMT(...) with Delaunay as argument
  */
-void ESMT::findESMT(Delaunay &del, 
-		    SubgraphHeuristic *sh,
-		    bool concat_subgraphs,
-		    bool post_optimise,
-		    bool special_concat,
-		    unsigned int use_bg,
-		    bool verbose) {
+void ESMT::findESMT(Delaunay &del) {
   unsigned int i, j, bits;
   this->bgraph = NULL;
   
-  assert(sh);
   this->dim = del.dimension();
   this->N = this->n();
 
-  // Don't concat subgraphs if use_bg is set
-  concat_subgraphs = concat_subgraphs && !use_bg;
-  // Don't use special concat if use_bg is set
-  special_concat   = special_concat && !use_bg;
-
-  if(use_bg) {
-    // Don't do special concat if use_bg
-    special_concat = false;
+  if(this->use_bg) {
+    // Don't do special concat or concat subgraphs if use_bg
+    this->concat_subgraphs = false;
+    this->special_concat = false;
     // Check that there are not too many points:
     //  dim = 2 -> 64 / 2 ~= 32 bits available
     //  dim = 3 -> 64 / 3 ~= 21 bits available
@@ -155,7 +129,7 @@ void ESMT::findESMT(Delaunay &del,
   this->stats.no_of_simplices = this->simplices.size();
 #endif
 
-  if(verbose) {
+  if(this->verbose) {
     std::cout << "Delaunay done!" << std::endl
 	      << "  Simplices:  " << this->simplices.size() << std::endl;
   }
@@ -169,7 +143,7 @@ void ESMT::findESMT(Delaunay &del,
   
   this->setMSTLength(this->getLength());
   
-  if(verbose) {
+  if(this->verbose) {
     std::cout << "MST done!" << std::endl
 	      << "  Length:  " << this->getMSTLength() << std::endl;
   }
@@ -200,7 +174,7 @@ void ESMT::findESMT(Delaunay &del,
     // Only find covered faces
     this->findCoveredFaces(handles, connections);
   
-  if(verbose) {
+  if(this->verbose) {
     std::cout << "Preprocessing done!" << std::endl
 	      << "  Number of covered faces: " << this->components.size() << std::endl;
 #if(ESMT_COLLECT_STATS)
@@ -237,7 +211,7 @@ void ESMT::findESMT(Delaunay &del,
       if(sit->n() == 3)
 	Utils::getFermatSMT(st);
       else
-	sh->findSteinerPoints(st);
+	this->sh->findSteinerPoints(st);
       
       st.setSMTLength(st.getLength());
       st.computeRatios();
@@ -250,7 +224,7 @@ void ESMT::findESMT(Delaunay &del,
       st.computeRatios();
       this->smts.push_back(st);
       
-      if(sit->n() == this->dim+1 && concat_subgraphs) {
+      if(sit->n() == this->dim+1 && this->concat_subgraphs) {
 	unsigned int simplex = this->simplex_id[i];
 	
 	std::vector<unsigned int> map;
@@ -271,7 +245,7 @@ void ESMT::findESMT(Delaunay &del,
   this->stats.sub_trees_in_queue = this->smts.size();
 #endif
 
-  if(verbose) {
+  if(this->verbose) {
     std::cout << "Sub-trees found!" << std::endl
 	      << "  Number of sub-trees in queue: " << this->smts.size() << std::endl;
 #if(ESMT_COLLECT_STATS)
@@ -293,12 +267,12 @@ void ESMT::findESMT(Delaunay &del,
   this->stats.add_sub_trees_total = 0;
 #endif
 
-  if(use_bg)
-    this->doConcatenateWithBottleneck(verbose);
-  else if(special_concat)
-    this->doConcatenateWithRedo(*sh, verbose);
+  if(this->use_bg)
+    this->doConcatenateWithBottleneck();
+  else if(this->special_concat)
+    this->doConcatenateWithRedo();
   else
-    this->doConcatenate(verbose);
+    this->doConcatenate();
   
   this->setSMTLength(this->getLength());
   this->computeRatios();
@@ -307,8 +281,8 @@ void ESMT::findESMT(Delaunay &del,
   this->stats.no_of_sp = this->S;
 #endif
 
-  if(post_optimise) {
-    if(verbose)
+  if(this->post_optimise) {
+    if(this->verbose)
       std::cout << "Starting post optimisation." << std::endl
 		<< "  Current |SP| = " << this->s() << std::endl;
     // Setup for Smiths and add extra SPs. Then optimise, do clean-up and return.
@@ -336,7 +310,7 @@ void ESMT::findESMT(Delaunay &del,
     this->stats.no_of_sp_post_optimisation = this->s();
 #endif
     
-    if(verbose) {
+    if(this->verbose) {
       std::cout << "Post optimisation done!" << std::endl
 		<< "  |SP| = " << this->s() << std::endl;
 #if(ESMT_COLLECT_STATS)
@@ -349,7 +323,7 @@ void ESMT::findESMT(Delaunay &del,
     this->computeRatios();
   }
   
-  if(use_bg)
+  if(this->use_bg)
     delete this->bgraph;
 }
 
@@ -365,7 +339,7 @@ ESMT::~ESMT() {
 /*
  * Implementation of ESMT::doConcatenate(...)
  */
-void ESMT::doConcatenate(bool verbose) {
+void ESMT::doConcatenate() {
   unsigned int i, c;
   // Concatenation process.
   // This is really just MSTKruskal.
@@ -373,7 +347,7 @@ void ESMT::doConcatenate(bool verbose) {
   // Clear edges from Delaunay
   this->edges.clear();
   
-  if(verbose)
+  if(this->verbose)
     std::cout << "Starting concatenation process." << std::endl;  
 
   // First, create Disjoint sets. Each set is build over vertex indicies
@@ -408,7 +382,7 @@ void ESMT::doConcatenate(bool verbose) {
 /*
  * Implementation of ESMT::doConcatenateWithBottleneck(...)
  */
-void ESMT::doConcatenateWithBottleneck(bool verbose) {
+void ESMT::doConcatenateWithBottleneck() {
   unsigned int i, c;
   // Concatenation process.
   // This is really just MSTKruskal.
@@ -416,7 +390,7 @@ void ESMT::doConcatenateWithBottleneck(bool verbose) {
   // Clear edges from Delaunay
   this->edges.clear();
   
-  if(verbose)
+  if(this->verbose)
     std::cout << "Starting concatenation process." << std::endl;  
   // First, create Disjoint sets. Each set is build over vertex indicies
   std::vector< DisjointSet > sets;
@@ -464,11 +438,11 @@ void ESMT::doConcatenateWithBottleneck(bool verbose) {
 /*
  * Implementation of ESMT::doConcatenateWithRedo(...)
  */
-void ESMT::doConcatenateWithRedo(SubgraphHeuristic &sh, bool verbose) {
+void ESMT::doConcatenateWithRedo() {
   unsigned int i, j, c, k;
   
   // Initial concat
-  this->doConcatenate(false);
+  this->doConcatenate();
   // Get non-covered simplices
   std::vector<SteinerTree> non_covered_list;
   std::vector< Simplex >::iterator spit;
@@ -489,7 +463,7 @@ void ESMT::doConcatenateWithRedo(SubgraphHeuristic &sh, bool verbose) {
     if(spit->n == 3)
       Utils::getFermatSMT(st);
     else
-      sh.findSteinerPoints(st);
+      this->sh->findSteinerPoints(st);
     if(st.getSteinerRatio() >= 1.0)
       continue;
     
@@ -504,7 +478,7 @@ void ESMT::doConcatenateWithRedo(SubgraphHeuristic &sh, bool verbose) {
   this->computeRatios();
   double best_ratio = this->getSteinerRatio();
   k = 1000; // Maximum of max(1000,non_covered.size()) tries
-  if(verbose)
+  if(this->verbose)
       std::cout << "Ratio after initial concatenation: "
 		<< best_ratio << std::endl;
   
@@ -567,7 +541,7 @@ void ESMT::doConcatenateWithRedo(SubgraphHeuristic &sh, bool verbose) {
       // We are done
       break;
     if(this->getSteinerRatio() < best_ratio) {
-      if(verbose)
+      if(this->verbose)
 	std::cout << "Better ratio achieved: " << this->getSteinerRatio()
 		  << std::endl;
       best_ratio = this->getSteinerRatio();
@@ -893,19 +867,57 @@ void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
  */
 void ESMT::findAllFaces(Delaunay &del) {
   unsigned int i;
-  std::vector<Graph> &faces = del.findFaces();
   
   this->components.clear();
-  this->components.reserve(faces.size());
-  for(i=0; i<faces.size(); i++)
-    if(faces[i].n() > 2)
-      this->components.push_back(faces[i]);
-  // Get only MST edges
+  
+  std::vector<unsigned int> cur_set;
+  std::unordered_map<unsigned long, bool> flag;
+  std::vector<Simplex>::iterator sit;
+  for(sit = this->simplices.begin(); sit != this->simplices.end(); sit++) {
+    // Add all faces of this simplex (if not added already)
+    this->findAllFacesRec(*sit, cur_set, flag);
+    // Add simplex
+    std::vector<Pidx> pidxs;
+    for(unsigned int i=0; i<sit->n; i++)
+      pidxs.push_back(sit->map[i]);
+    this->components.push_back(Graph(pidxs, this->getPointsRef()));
+  }
+
+  // Add MST edges
   for(i=0; i<this->edges.size(); i++) {
     std::vector<Pidx> pidxs;
     pidxs.push_back(this->edges[i].i0);
     pidxs.push_back(this->edges[i].i1);
     this->components.push_back(Graph(pidxs, this->getPointsRef()));
+  }
+}
+
+/* Implementation of findAllFacesRec(...) */
+void ESMT::findAllFacesRec(Simplex &simplex, std::vector<unsigned int> &cur_set,
+			   std::unordered_map<unsigned long, bool> &flag) {
+  unsigned int i, n = cur_set.size(), dim = this->dimension();
+  
+  if(n > 2 && n <= dim) {
+    unsigned int bits = 64 / dim;
+    unsigned long key = 0;
+    
+    for(i = 0; i < n; i++)
+      key += (((unsigned long)cur_set[i]) << (bits*i));
+    
+    if(flag.find(key) == flag.end()) {
+      // Add subset.
+      flag[key] = true;
+      this->components.push_back(Graph(cur_set, this->getPointsRef()));
+    }
+  }
+  int last = n > 0 ? cur_set.back() : -1;
+  for(i = 0; i < simplex.n; i++) {
+    // Add only larger than
+    if((int)simplex.map[i] > last) {
+      std::vector<unsigned int> new_set = cur_set;
+      new_set.push_back(simplex.map[i]);
+      this->findAllFacesRec(simplex, new_set, flag);
+    }
   }
 }
 

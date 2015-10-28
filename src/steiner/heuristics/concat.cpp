@@ -23,6 +23,13 @@ IterativeConcat::IterativeConcat(int dim, bool doCleanUp) : SubgraphHeuristic(),
  */
 IterativeConcat::~IterativeConcat() {}
 
+/**
+ * Implementation of IterativeConcat::setDoCleanUp(...)
+ */
+void IterativeConcat::setDoCleanUp(bool doCleanUp) {
+  this->do_clean_up = doCleanUp;
+}
+
 /*
  * Finds the steiner points and edges.
  */

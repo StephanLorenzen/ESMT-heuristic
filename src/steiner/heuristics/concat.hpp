@@ -38,6 +38,13 @@ public:
    * @return      The (allocated) resulting SteinerTree
    */
   void insertTerminal(SteinerTree &fst, unsigned int pi, double mst_length);
+
+  /**
+   * Setter for the doCleanUp flag
+   *
+   * @param doCleanUp  the new value of doCleanUp
+   */
+  void setDoCleanUp(bool doCleanUp);
   
 protected:
 private:

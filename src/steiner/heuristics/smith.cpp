@@ -25,6 +25,13 @@ IterativeSmith::IterativeSmith(int dim, bool doCleanUp)
 IterativeSmith::~IterativeSmith() {}
 
 /**
+ * Implementation of IterativeSmith::setDoCleanUp(...)
+ */
+void IterativeSmith::setDoCleanUp(bool doCleanUp) {
+  this->do_clean_up = doCleanUp;
+}
+
+/**
  * Finds the steiner points and edges.
  */
 void IterativeSmith::findSteinerPoints(SteinerTree &subgraph) {

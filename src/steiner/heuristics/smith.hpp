@@ -36,6 +36,13 @@ public:
    */
   void findSteinerPoints(SteinerTree &subgraph);
 
+  /**
+   * Setter for the doCleanUp flag
+   *
+   * @param doCleanUp  the new value of doCleanUp
+   */
+  void setDoCleanUp(bool doCleanUp);
+  
 protected:
 private:
   void buildTree(unsigned int l, int *topo_vec);
