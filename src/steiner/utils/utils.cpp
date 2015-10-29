@@ -147,6 +147,19 @@ bool Utils::validate(SteinerTree &st) {
     return false;
   }
   
+  double actual_mst_length = Utils::MSTLengthKruskal(st.getPointsRef());
+  if(actual_mst_length != st.getMSTLength()) {
+    std::cerr << "Set MST length: " << st.getMSTLength() << " != actual MST length "
+	      << actual_mst_length << std::endl;
+    return false;
+  }
+
+  if(st.getSMTLength() != st.getLength()) {
+    std::cerr << "Set SMT Length: " << st.getSMTLength() << " != actual length "
+	      << st.getLength() << std::endl;
+    return false;
+  }
+  
   std::vector<int> pf(st.m(), 0);
   std::vector<int> ef(edges.size(), 0);
   validateRec(edges, pf, ef, 0, -1);
