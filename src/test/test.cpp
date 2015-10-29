@@ -218,7 +218,7 @@ void Test::doTestESMTSpecial(int d, int n, int seed, bool verbose) {
   ESMT esmt(del, &ic, true, true, false, verbose);
 
   std::vector<unsigned int> faces = del.getNumberOfFaces();
-
+  
   std::cout << std::endl << " * Test done *" << std::endl << std::endl
 	    << "  Delaunay faces: " << std::endl
 	    << "K;No;Accum" << std::endl;
@@ -231,8 +231,8 @@ void Test::doTestESMTSpecial(int d, int n, int seed, bool verbose) {
   std::cout << std::endl << "  Covered faces (and sausages): " << std::endl
 	    << "K;No;Accum;Frac" << std::endl;
   sum = 0;
-  for(j = 0; j < esmt.getStats()->covered_faces.size(); j++) {
-    unsigned int no = esmt.getStats()->covered_faces[j];
+  for(j = 0; j < esmt.getStats()->faces.size(); j++) {
+    unsigned int no = esmt.getStats()->faces[j];
     if(no != 0) {
       sum += no;
       std::cout << j << ";" << no << ";" << sum << ";";

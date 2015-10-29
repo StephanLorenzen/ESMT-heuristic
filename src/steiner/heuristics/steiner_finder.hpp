@@ -33,6 +33,13 @@ public:
    * @return           Approximated ESMT for the given point set.
    */
   void findSteinerPoints(SteinerTree &subgraph);
+
+  /**
+   * Setter for the doCleanUp flag
+   *
+   * @param doCleanUp  the new value of doCleanUp
+   */
+  void setDoCleanUp(bool doCleanUp);
   
 protected:
 private:

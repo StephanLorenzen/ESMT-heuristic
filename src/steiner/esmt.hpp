@@ -84,8 +84,6 @@ public:
 
     // Delaunay
     unsigned int no_of_simplices;
-    // Covered faces
-    std::vector<unsigned int> covered_faces;
     // All faces
     std::vector<unsigned int> faces;
     // Sub-trees in queue
@@ -191,10 +189,8 @@ private:
    *
    * @param handles      A list of point handles from the Delaunay triangulation.
    *                     These contain simplex indices for each point.
-   * @param connections  Lists the connections for each point in the MST.
    */
-  void findCoveredFaces(std::vector< Utils::Delaunay::PointHandle > &handles,
-			std::vector< std::vector<int> > &connections);
+  void findCoveredFaces(std::vector< Utils::Delaunay::PointHandle > &handles);
 
   /**
    * The recursive part of the findCoveredFaces procedure.
@@ -224,10 +220,8 @@ private:
 
   /**
    * Procedure findAllFaces finds all faces from the Delaunay triangulation.
-   *
-   * @param del  The Delaunay triangulation.
    */
-  void findAllFaces(Utils::Delaunay &del);
+  void findAllFaces();
 
   /**
    * Recursive part of procedure findAllFaces.
@@ -238,7 +232,17 @@ private:
    */
   void findAllFacesRec(Utils::Delaunay::Simplex &simplex, std::vector<unsigned int> &cur_set,
 		       std::unordered_map<unsigned long, bool> &flag);
-    
+  
+  /**
+   * Computes the FST of the given set and adds it to the component list if it has ratio < 1.
+   * If use_bg is true, the FST must be full to be added.
+   *
+   * @param set    the set to generate a FST for
+   * @param edges  MST edges for the set. Can be empty if use_bg is true
+   * @param si     index of simplex. Ignored if set is not a simplex 
+   */
+  void findFST(std::vector<unsigned int> &set, std::vector<Utils::Edge> &edges,
+	       unsigned int i = 0);
 
   /**
    * Builds sausages recursively.
@@ -323,12 +327,9 @@ private:
   std::vector<bool> is_covered_simplex;
   
   /** Components to create SMTs for */
-  std::vector<Graph> components;
+  std::vector<SteinerTree> components;
   std::unordered_map<unsigned int, unsigned int> simplex_id;
   
-  /** List of SMTs for concatenation */
-  std::vector<SteinerTree> smts;
-
   /** Priority queue for concatenation */
   Utils::Heap<SteinerTree> *queue;
 

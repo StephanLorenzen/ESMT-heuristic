@@ -21,7 +21,7 @@
 #include "steiner/utils/bottleneck_graph/bg_lazy.hpp"
 #include "steiner/utils/bottleneck_graph/bg_sleator.hpp"
 
-#define ESMT_COLLECT_STATS  0
+#define ESMT_COLLECT_STATS  1
 
 /*
  * Utils type definitions
@@ -75,7 +75,7 @@ ESMT::Stats *ESMT::getStats() {
 }
 
 std::vector<SteinerTree> &ESMT::getComponents() {
-  return this->smts;
+  return this->components;
 }
 
 /*
@@ -91,8 +91,11 @@ void ESMT::findESMT(std::vector<Point> &points) {
  * Implementation of findESMT(...) with Delaunay as argument
  */
 void ESMT::findESMT(Delaunay &del) {
-  unsigned int i, j, bits;
+  unsigned int bits;
   this->bgraph = NULL;
+  
+  assert(this->sh);
+  this->sh->setDoCleanUp(this->use_bg);
   
   this->dim = del.dimension();
   this->N = this->n();
@@ -123,10 +126,10 @@ void ESMT::findESMT(Delaunay &del) {
   this->edges              = del.getEdges();
   this->simplices          = del.getSimplices();
   this->is_covered_simplex = std::vector<bool>(this->simplices.size(), false);
-  std::vector<PointHandle> &handles = del.getPointHandles();
   
 #if(ESMT_COLLECT_STATS)
   this->stats.no_of_simplices = this->simplices.size();
+  this->stats.faces = std::vector<unsigned int>(this->dim+2, 0);
 #endif
 
   if(this->verbose) {
@@ -154,113 +157,51 @@ void ESMT::findESMT(Delaunay &del) {
   //////////////////
   // Preprocessing
   
-  // 1. Build the connections list and sort all handles
-  std::vector< std::vector<int> > connections(this->n());
-  for(i = 0; i < this->n(); i++)
-    std::sort(handles[i].simplices.begin(),handles[i].simplices.end());
-  unsigned int i0, i1;
-  for(i = 0; i < this->edges.size(); i++) {
-    i0 = this->edges[i].i0;
-    i1 = this->edges[i].i1;
-    connections[i0].push_back(i1);
-    connections[i1].push_back(i0);
-  }
-  
-  // 2. Generate faces
+  // Generate faces
   if(use_bg)
     // Find all faces
-    this->findAllFaces(del);
+    this->findAllFaces();
   else
     // Only find covered faces
-    this->findCoveredFaces(handles, connections);
+    this->findCoveredFaces(del.getPointHandles());
   
+#if(ESMT_COLLECT_STATS)
   if(this->verbose) {
+    unsigned int i, sum = 0, sum_c = 0;
+    for(i = 2; i < this->stats.faces.size(); i++)
+      sum += this->stats.faces[i];
+    for(i = 2; i < this->stats.faces.size(); i++)
+      sum_c += this->stats.faces[i];
     std::cout << "Preprocessing done!" << std::endl
-	      << "  Number of covered faces: " << this->components.size() << std::endl;
-#if(ESMT_COLLECT_STATS)
-    for(i = 2; i < this->stats.covered_faces.size(); i++)
+	      << "  Number of " << (this->use_bg?"covered ":"")
+	      << "faces: " << (this->use_bg?sum:sum_c) << std::endl;
+    for(i = 2; i < this->stats.faces.size(); i++)
       std::cout << "   [" << i << "]: "
-		<< this->stats.covered_faces[i] << std::endl;
+		<< this->stats.faces[i] << std::endl; 
+  }
 #endif
-  }
   
-  // We now have a list of all faces (or only those covered by the MST, if not use_bg).
-  // Begin finding small SMTs.
-  // Allocate vector now. Approx each element should be added.
-  this->smts.reserve(this->components.size());
-
-  std::vector< Graph >::iterator sit;  
-  for(sit = this->components.begin(), i=0; sit != this->components.end(); sit++, i++) {
-    if(sit->n() == 2) {
-      std::vector<Edge> edges;
-      edges.push_back(Edge(0,1));
-      SteinerTree st(sit->getPoints(), sit->getPointsRef(), edges);
-      double l = st.getLength();
-      st.setMSTLength(l);
-      st.setSMTLength(l);
-      st.setBMSTLength(l);
-      st.computeRatios();
-      this->smts.push_back(st);
-    }
-    else {
-      if(use_bg)
-	// First compute MST
-	Utils::MSTKruskalMod(*sit, true);
-      SteinerTree st(sit->getPoints(), sit->getPointsRef(), sit->getEdges());
-      st.setMSTLength(st.getLength());
-      if(sit->n() == 3)
-	Utils::getFermatSMT(st);
-      else
-	this->sh->findSteinerPoints(st);
-      
-      st.setSMTLength(st.getLength());
-      st.computeRatios();
-      
-      if(st.getSteinerRatio() >= 1.0)
-	continue;
-
-      if(use_bg)
-	st.setBMSTLength(this->bgraph->getBMSTLength(st.getPoints()));
-      st.computeRatios();
-      this->smts.push_back(st);
-      
-      if(sit->n() == this->dim+1 && this->concat_subgraphs) {
-	unsigned int simplex = this->simplex_id[i];
-	
-	std::vector<unsigned int> map;
-	for(j = 0; j < this->simplices[simplex].n; j++)
-	  map.push_back(this->simplices[simplex].map[j]);
-	
-	for(j = 0; j < map.size(); j++) {
-	  // Swap first element with i
-	  unsigned int tmp = map[0];
-	  map[0]           = map[j];
-	  map[j]           = tmp;
-	  this->buildSausage(map, st, 0, j, simplex, simplex, 1);
-	}
-      }
-    }
-  }
 #if(ESMT_COLLECT_STATS)
-  this->stats.sub_trees_in_queue = this->smts.size();
+  this->stats.sub_trees_in_queue = this->components.size();
 #endif
 
   if(this->verbose) {
     std::cout << "Sub-trees found!" << std::endl
-	      << "  Number of sub-trees in queue: " << this->smts.size() << std::endl;
+	      << "  Number of sub-trees in queue: " << this->components.size() << std::endl;
 #if(ESMT_COLLECT_STATS)
+    unsigned int i;
     std::cout << "  Number of covered sausages: " << std::endl;
-    for(i = this->dim+2; i < this->stats.covered_faces.size(); i++)
+    for(i = this->dim+2; i < this->stats.faces.size(); i++)
       std::cout << "   [" << i << "]: "
-		<< this->stats.covered_faces[i] << std::endl;
+		<< this->stats.faces[i] << std::endl;
 #endif
   }
   
   // Sort priority queue of sub-graphs according to ratio
-  if(use_bg)
-    this->queue = new Queue(ESMT::compareSteinerBRatio, this->smts);
+  if(this->use_bg)
+    this->queue = new Queue(ESMT::compareSteinerBRatio, this->components);
   else
-    this->queue = new Queue(ESMT::compareSteinerRatio, this->smts);
+    this->queue = new Queue(ESMT::compareSteinerRatio, this->components);
   
 #if(ESMT_COLLECT_STATS)
   this->stats.added_sub_trees.clear();
@@ -292,8 +233,8 @@ void ESMT::findESMT(Delaunay &del) {
     // Find overlapping SPs
     double l = this->length();
     l /= this->N+this->S;
-    for(i = 0; i < this->N-2; i++) {
-      for(j = 0; j < 3; j++) {
+    for(unsigned int i = 0; i < this->N-2; i++) {
+      for(unsigned int j = 0; j < 3; j++) {
 	unsigned int op = this->adj[i][j];
 	if(op >= this->N && op-this->N > i) {
 	  if(this->EL[i][j] < 0.0001*l)
@@ -488,7 +429,7 @@ void ESMT::doConcatenateWithRedo() {
       flags[j] = false;
   
   // Sort smts for reuse
-  std::sort(this->smts.begin(), this->smts.end(), ESMT::compareSteinerRatio);
+  std::sort(this->components.begin(), this->components.end(), ESMT::compareSteinerRatio);
   
   i = 0;
   while(true) {
@@ -525,7 +466,7 @@ void ESMT::doConcatenateWithRedo() {
     // Now do rest of concatenation
     j = 0;
     while(true) {
-      SteinerTree &st = this->smts[j++];
+      SteinerTree &st = this->components[j++];
       if(this->concatCheck(st,sets,flags)) {
 	this->concatAdd(st,sets);
 	c += st.n()-1;
@@ -769,10 +710,20 @@ bool ESMT::isInMST(int i0, int i1) {
 /*
  * Implementation of ESMT::findCoveredFaces(...)
  */
-void ESMT::findCoveredFaces(std::vector< PointHandle > &handles,
-			    std::vector< std::vector<int> > &connections) {
-
+void ESMT::findCoveredFaces(std::vector< PointHandle > &handles) {
   unsigned int i, p;
+  // Build the connections list and sort all handles
+  std::vector< std::vector<int> > connections(this->n());
+  for(i = 0; i < this->n(); i++)
+    std::sort(handles[i].simplices.begin(),handles[i].simplices.end());
+  unsigned int i0, i1;
+  for(i = 0; i < this->edges.size(); i++) {
+    i0 = this->edges[i].i0;
+    i1 = this->edges[i].i1;
+    connections[i0].push_back(i1);
+    connections[i1].push_back(i0);
+  }
+  
   std::unordered_map<unsigned int, unsigned int> map;
   bool *flag = new bool[this->n()];
   for(i = 0; i < this->n(); i++)
@@ -805,7 +756,7 @@ void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
 			       unsigned int cur,
 			       unsigned int prev,
 			       unsigned int bound) {
-  unsigned int c, i, j, rank, next;
+  unsigned int i, j, rank, next;
   std::vector<int> intersection;
   
   if(cur != bound) {
@@ -823,20 +774,13 @@ void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
     std::vector<Edge> &edges  = prevSet.getEdges();
     points.push_back(cur);
     edges.push_back(Edge(prev, points.size()-1));
-    this->components.push_back(prevSet);
-    c = this->components.size()-1;
-
-    if(intersection.size() == 1 && prevSet.n() == this->dim+1) {
-      // This is a simplex. Add index to simplex list
-      this->simplex_id[c] = intersection[0];
-      this->is_covered_simplex[intersection[0]] = true;
-    }
-
+    this->findFST(points, edges, intersection[0]);
+    
 #if(ESMT_COLLECT_STATS)
     unsigned int size = prevSet.n();
-    while(this->stats.covered_faces.size() < size+1)
-      this->stats.covered_faces.push_back(0);
-    this->stats.covered_faces[size]++;
+    while(this->stats.faces.size() < size+1)
+      this->stats.faces.push_back(0);
+    this->stats.faces[size]++;
 #endif
   }
   else
@@ -865,12 +809,14 @@ void ESMT::findCoveredFacesRec(std::vector< PointHandle > &handles,
 /*
  * Implementation of ESMT::findAllFaces(...)
  */
-void ESMT::findAllFaces(Delaunay &del) {
+void ESMT::findAllFaces() {
   unsigned int i;
-  
+
   this->components.clear();
   
+  
   std::vector<unsigned int> cur_set;
+  std::vector<Edge> edges;
   std::unordered_map<unsigned long, bool> flag;
   std::vector<Simplex>::iterator sit;
   for(sit = this->simplices.begin(); sit != this->simplices.end(); sit++) {
@@ -880,7 +826,7 @@ void ESMT::findAllFaces(Delaunay &del) {
     std::vector<Pidx> pidxs;
     for(unsigned int i=0; i<sit->n; i++)
       pidxs.push_back(sit->map[i]);
-    this->components.push_back(Graph(pidxs, this->getPointsRef()));
+    this->findFST(pidxs, edges);
   }
 
   // Add MST edges
@@ -888,7 +834,7 @@ void ESMT::findAllFaces(Delaunay &del) {
     std::vector<Pidx> pidxs;
     pidxs.push_back(this->edges[i].i0);
     pidxs.push_back(this->edges[i].i1);
-    this->components.push_back(Graph(pidxs, this->getPointsRef()));
+    this->findFST(pidxs, edges);
   }
 }
 
@@ -896,6 +842,7 @@ void ESMT::findAllFaces(Delaunay &del) {
 void ESMT::findAllFacesRec(Simplex &simplex, std::vector<unsigned int> &cur_set,
 			   std::unordered_map<unsigned long, bool> &flag) {
   unsigned int i, n = cur_set.size(), dim = this->dimension();
+  std::vector<Edge> edges;
   
   if(n > 2 && n <= dim) {
     unsigned int bits = 64 / dim;
@@ -907,7 +854,7 @@ void ESMT::findAllFacesRec(Simplex &simplex, std::vector<unsigned int> &cur_set,
     if(flag.find(key) == flag.end()) {
       // Add subset.
       flag[key] = true;
-      this->components.push_back(Graph(cur_set, this->getPointsRef()));
+      this->findFST(cur_set, edges);
     }
   }
   int last = n > 0 ? cur_set.back() : -1;
@@ -917,6 +864,71 @@ void ESMT::findAllFacesRec(Simplex &simplex, std::vector<unsigned int> &cur_set,
       std::vector<unsigned int> new_set = cur_set;
       new_set.push_back(simplex.map[i]);
       this->findAllFacesRec(simplex, new_set, flag);
+    }
+  }
+}
+
+/* Implementation of ESMT::findFST(...) */
+void ESMT::findFST(std::vector<unsigned int> &set, std::vector<Edge> &edges, unsigned int si) {
+  #if(ESMT_COLLECT_STATS)
+  this->stats.faces[set.size()]++;
+  #endif
+  if(set.size() == 2) {
+    edges.clear();
+    edges.push_back(Edge(0,1));
+    SteinerTree st(set, this->getPointsRef(), edges);
+    double l = st.getLength();
+    st.setMSTLength(l);
+    st.setSMTLength(l);
+    st.setBMSTLength(l);
+    st.computeRatios();
+    this->components.push_back(st);
+  }
+  else {
+    SteinerTree st(set, this->getPointsRef(), edges);
+    if(use_bg)
+      Utils::MSTKruskalMod(st, true);
+    st.setMSTLength(st.getLength());
+    if(st.n() == 3)
+      Utils::getFermatSMT(st);
+    else
+      this->sh->findSteinerPoints(st);
+    
+    if(this->use_bg) {
+      if(st.s() < st.n()-2)
+	// Not full Steiner tree, drop
+	return;
+    }
+    
+    st.setSMTLength(st.getLength());
+    st.computeRatios();
+    
+    if(st.getSteinerRatio() >= 1.0)
+      // Do not add
+      return;
+    
+    if(this->use_bg) {
+      st.setBMSTLength(this->bgraph->getBMSTLength(st.getPoints()));
+      st.computeRatios();
+    }
+    
+    this->components.push_back(st);
+    
+    if(st.n() == this->dim+1 && this->concat_subgraphs) {
+      unsigned int j;
+      this->is_covered_simplex[si] = true;
+
+      std::vector<unsigned int> map;
+      for(j = 0; j < this->simplices[si].n; j++)
+	map.push_back(this->simplices[si].map[j]);
+      
+      for(j = 0; j < map.size(); j++) {
+	// Swap first element with i
+	unsigned int tmp = map[0];
+	map[0]           = map[j];
+	map[j]           = tmp;
+	this->buildSausage(map, st, 0, j, si, si, 1);
+      }
     }
   }
 }
@@ -977,12 +989,12 @@ void ESMT::buildSausage(std::vector<unsigned int> &prevSet,
   
 #if(ESMT_COLLECT_STATS)
   unsigned int size = prevTree.n()+1;
-  while(this->stats.covered_faces.size() < size+1)
-    this->stats.covered_faces.push_back(0);
-  this->stats.covered_faces[size]++;
+  while(this->stats.faces.size() < size+1)
+    this->stats.faces.push_back(0);
+  this->stats.faces[size]++;
 #endif
 
-  this->smts.push_back(st);
+  this->components.push_back(st);
   added += 1;
   // We build from the largest index, so we have to choose the
   // simplex on the face with the last dim points from cur-set.
@@ -1080,12 +1092,12 @@ void ESMT::buildSausageReverse(std::vector<unsigned int> &prevSet,
 
 #if(ESMT_COLLECT_STATS)
   unsigned int size = prevTree.n()+1;
-  while(this->stats.covered_faces.size() < size+1)
-    this->stats.covered_faces.push_back(0);
-  this->stats.covered_faces[size]++;
+  while(this->stats.faces.size() < size+1)
+    this->stats.faces.push_back(0);
+  this->stats.faces[size]++;
 #endif
   
-  this->smts.push_back(st);
+  this->components.push_back(st);
   added += 1;
   // We now build in reverse. Given curSet of the form:
   // curSet[0..(1st index)..((d+1)th index)..n]

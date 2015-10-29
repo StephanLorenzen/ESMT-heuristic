@@ -21,6 +21,13 @@ SteinerFinder::SteinerFinder(SubgraphHeuristic* sh) {
 
 SteinerFinder::~SteinerFinder() {}
 
+/**
+ * Implementation of SteinerFinder::setDoCleanUp(...)
+ */
+void SteinerFinder::setDoCleanUp(bool doCleanUp) {
+  return; // Not supported here
+}
+
 void SteinerFinder::findSteinerPoints(SteinerTree &subgraph) {
   unsigned int i;
   

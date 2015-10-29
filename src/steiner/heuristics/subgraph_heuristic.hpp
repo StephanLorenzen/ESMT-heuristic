@@ -33,6 +33,14 @@ public:
    */
   virtual void findSteinerPoints(SteinerTree &subgraph) = 0;
 
+  /**
+   * Setter for the doCleanUp flag. If true, degenerate Steiner points should
+   * be combined into one.
+   *
+   * @param doCleanUp  the new value of doCleanUp
+   */
+  virtual void setDoCleanUp(bool doCleanUp) = 0;
+
 protected:
 private:
 };
