@@ -1,0 +1,1338 @@
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-00"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 0/45."
+END
+
+SECTION Graph
+Nodes 5
+END
+
+SECTION Coordinates
+DD 1 .7 .96
+DD 2 .88 .46
+DD 3 .88 .16
+DD 4 .19 .26
+DD 5 .19 .06
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-01"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 1/45."
+END
+
+SECTION Graph
+Nodes 6
+END
+
+SECTION Coordinates
+DD 1 .21 .51
+DD 2 .36 .77
+DD 3 .36 .25
+DD 4 .66 .77
+DD 5 .66 .25
+DD 6 .81 .51
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-02"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 2/45."
+END
+
+SECTION Graph
+Nodes 7
+END
+
+SECTION Coordinates
+DD 1 .33 .14
+DD 2 .68 .14
+DD 3 .89 .41
+DD 4 .81 .75
+DD 5 .50 .90
+DD 6 .19 .75
+DD 7 .11 .41
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-03"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 3/45."
+END
+
+SECTION Graph
+Nodes 8
+END
+
+SECTION Coordinates
+DD 1 .40 .89
+DD 2 .70 .85
+DD 3 .89 .60
+DD 4 .85 .30
+DD 5 .60 .12
+DD 6 .30 .16
+DD 7 .11 .40
+DD 8 .15 .70
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-04"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 4/45."
+END
+
+SECTION Graph
+Nodes 6
+END
+
+SECTION Coordinates
+DD 1 .30 .86
+DD 2 .70 .86
+DD 3 .90 .50
+DD 4 .70 .13
+DD 5 .30 .13
+DD 6 .10 .50
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-05"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 5/45."
+END
+
+SECTION Graph
+Nodes 12
+END
+
+SECTION Coordinates
+DD 1 .03 .50
+DD 2 .20 .60
+DD 3 .37 .50
+DD 4 .37 .30
+DD 5 .20 .20
+DD 6 .03 .30
+DD 7 .63 .50
+DD 8 .80 .60
+DD 9 .97 .50
+DD 10 .97 .30
+DD 11 .80 .20
+DD 12 .63 .30
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-06"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 6/45."
+END
+
+SECTION Graph
+Nodes 12
+END
+
+SECTION Coordinates
+DD 1 .03 .50
+DD 2 .20 .60
+DD 3 .37 .50
+DD 4 .37 .30
+DD 5 .20 0
+DD 6 .03 .30
+DD 7 .53 .50
+DD 8 .70 .60
+DD 9 .87 .50
+DD 10 .87 .30
+DD 11 .70 .20
+DD 12 .53 .30
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-07"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 7/45."
+END
+
+SECTION Graph
+Nodes 12
+END
+
+SECTION Coordinates
+DD 1 0 .40
+DD 2 .10 .57
+DD 3 .30 .57
+DD 4 .40 .40
+DD 5 .30 .23
+DD 6 .10 .23
+DD 7 .70 .57
+DD 8 .90 .57
+DD 9 1.00 .40
+DD 10 .90 .23
+DD 11 .70 .23
+DD 12 .60 .40
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-08"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 8/45."
+END
+
+SECTION Graph
+Nodes 7
+END
+
+SECTION Coordinates
+DD 1 .21 .51
+DD 2 .36 .77
+DD 3 .36 .25
+DD 4 .66 .77
+DD 5 .66 .25
+DD 6 .81 .51
+DD 7 .51 .51
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-09"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 9/45."
+END
+
+SECTION Graph
+Nodes 6
+END
+
+SECTION Coordinates
+DD 1 .14 .45
+DD 2 .21 .27
+DD 3 .75 .19
+DD 4 .87 .34
+DD 5 .67 .84
+DD 6 .48 .86
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-10"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 10/45."
+END
+
+SECTION Graph
+Nodes 6
+END
+
+SECTION Coordinates
+DD 1 .41 .98
+DD 2 .76 .89
+DD 3 .46 .61
+DD 4 .41 .36
+DD 5 .15 .23
+DD 6 .33 .20
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-11"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 11/45."
+END
+
+SECTION Graph
+Nodes 9
+END
+
+SECTION Coordinates
+DD 1 .35 0
+DD 2 .15 .10
+DD 3 .45 .20
+DD 4 .15 .30
+DD 5 .45 .40
+DD 6 .15 .50
+DD 7 .45 .60
+DD 8 .15 .70
+DD 9 .35 .80
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-12"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 12/45."
+END
+
+SECTION Graph
+Nodes 9
+END
+
+SECTION Coordinates
+DD 1 .10 .25
+DD 2 .30 .35
+DD 3 0 .40
+DD 4 .40 .40
+DD 5 0 .50
+DD 6 .50 .55
+DD 7 .30 .65
+DD 8 0 .70
+DD 9 .20 .70
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-13"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 13/45."
+END
+
+SECTION Graph
+Nodes 12
+END
+
+SECTION Coordinates
+DD 1 .10 .10
+DD 2 .15 .15
+DD 3 .20 .20
+DD 4 .20 .80
+DD 5 .15 .85
+DD 6 .10 .90
+DD 7 .80 .80
+DD 8 .85 .85
+DD 9 .90 .90
+DD 10 .80 .20
+DD 11 .85 .15
+DD 12 .90 .10
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-14"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 14/45."
+END
+
+SECTION Graph
+Nodes 14
+END
+
+SECTION Coordinates
+DD 1 .25 .11
+DD 2 .20 .13
+DD 3 .13 .20
+DD 4 .10 .30
+DD 5 .13 .40
+DD 6 .20 .48
+DD 7 .30 .50
+DD 8 .40 .48
+DD 9 .48 .40
+DD 10 .50 .30
+DD 11 .48 .20
+DD 12 .45 .17
+DD 13 .30 .16
+DD 14 .32 0
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-15"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 15/45."
+END
+
+SECTION Graph
+Nodes 3
+END
+
+SECTION Coordinates
+DD 1 .10 1
+DD 2 .40 .80
+DD 3 .80 .10
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-16"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 16/45."
+END
+
+SECTION Graph
+Nodes 10
+END
+
+SECTION Coordinates
+DD 1 .46 .74
+DD 2 .82 .56
+DD 3 .82 .38
+DD 4 .73 .10
+DD 5 .64 .01
+DD 6 .54 .01
+DD 7 .46 .01
+DD 8 .27 .20
+DD 9 .28 .38
+DD 10 .32 .56
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-17"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 17/45."
+END
+
+SECTION Graph
+Nodes 62
+END
+
+SECTION Coordinates
+DD 1 .93 .20
+DD 2 .93 .27
+DD 3 .93 .34
+DD 4 .93 .41
+DD 5 .93 .48
+DD 6 .93 .54
+DD 7 .88 .44
+DD 8 .88 .30
+DD 9 .82 .20
+DD 10 .82 .27
+DD 11 .82 .34
+DD 12 .82 .41
+DD 13 .82 .47
+DD 14 .82 .55
+DD 15 .77 .51
+DD 16 .77 .23
+DD 17 .71 .55
+DD 18 .71 .47
+DD 19 .71 .41
+DD 20 .71 .27
+DD 21 .71 .20
+DD 22 .60 .55
+DD 23 .60 .47
+DD 24 .60 .41
+DD 25 .60 .34
+DD 26 .60 .27
+DD 27 .60 .20
+DD 28 .49 .55
+DD 29 .49 .51
+DD 30 .49 .47
+DD 31 .49 .38
+DD 32 .49 .34
+DD 33 .47 .27
+DD 34 .49 .23
+DD 35 .49 .20
+DD 36 .38 .20
+DD 37 .38 .27
+DD 38 .38 .34
+DD 39 .38 .41
+DD 40 .38 .47
+DD 41 .38 .55
+DD 42 .27 .41
+DD 43 .27 .47
+DD 44 .27 .55
+DD 45 .27 .27
+DD 46 .27 .20
+DD 47 .22 .23
+DD 48 .22 .51
+DD 49 .16 .55
+DD 50 .16 .47
+DD 51 .16 .41
+DD 52 .16 .34
+DD 53 .16 .27
+DD 54 .16 .20
+DD 55 .11 .44
+DD 56 .11 .30
+DD 57 .05 .55
+DD 58 .05 .47
+DD 59 .05 .41
+DD 60 .05 .34
+DD 61 .05 .27
+DD 62 .05 .20
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-18"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 18/45."
+END
+
+SECTION Graph
+Nodes 14
+END
+
+SECTION Coordinates
+DD 1 .77 .55
+DD 2 .85 .55
+DD 3 .83 .52
+DD 4 .81 .49
+DD 5 .80 .48
+DD 6 .70 .50
+DD 7 .37 .41
+DD 8 .33 .48
+DD 9 .38 .74
+DD 10 .45 .75
+DD 11 .49 .22
+DD 12 .35 .21
+DD 13 .28 .05
+DD 14 .03 .12
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-19"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 19/45."
+END
+
+SECTION Graph
+Nodes 3
+END
+
+SECTION Coordinates
+DD 1 .20 .90
+DD 2 .80 .90
+DD 3 .50 .38
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-20"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 20/45."
+END
+
+SECTION Graph
+Nodes 5
+END
+
+SECTION Coordinates
+DD 1 .50 .90
+DD 2 .88 .62
+DD 3 .74 .18
+DD 4 .26 .18
+DD 5 .12 .62
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-21"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 21/45."
+END
+
+SECTION Graph
+Nodes 4
+END
+
+SECTION Coordinates
+DD 1 .60 .50
+DD 2 .70 .65
+DD 3 .73 .53
+DD 4 .95 .40
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-22"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 22/45."
+END
+
+SECTION Graph
+Nodes 4
+END
+
+SECTION Coordinates
+DD 1 .60 .50
+DD 2 .70 .65
+DD 3 .75 .58
+DD 4 .95 .40
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-23"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 23/45."
+END
+
+SECTION Graph
+Nodes 4
+END
+
+SECTION Coordinates
+DD 1 .20 .13
+DD 2 .25 .11
+DD 3 .30 .16
+DD 4 .32 0
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-24"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 24/45."
+END
+
+SECTION Graph
+Nodes 3
+END
+
+SECTION Coordinates
+DD 1 .25 .11
+DD 2 .30 .16
+DD 3 .32 0
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-25"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 25/45."
+END
+
+SECTION Graph
+Nodes 3
+END
+
+SECTION Coordinates
+DD 1 .20 .13
+DD 2 .25 .11
+DD 3 .30 .16
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-26"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 26/45."
+END
+
+SECTION Graph
+Nodes 4
+END
+
+SECTION Coordinates
+DD 1 .03 .44
+DD 2 .80 .55
+DD 3 1 .20
+DD 4 .19 .45
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-27"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 27/45."
+END
+
+SECTION Graph
+Nodes 4
+END
+
+SECTION Coordinates
+DD 1 .25 .11
+DD 2 .30 .16
+DD 3 .25 .12
+DD 4 .32 0
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-28"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 28/45."
+END
+
+SECTION Graph
+Nodes 3
+END
+
+SECTION Coordinates
+DD 1 0 1
+DD 2 .90 0
+DD 3 1 .1
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-29"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 29/45."
+END
+
+SECTION Graph
+Nodes 12
+END
+
+SECTION Coordinates
+DD 1 .25 .10
+DD 2 .35 .10
+DD 3 .45 .10
+DD 4 .20 .20
+DD 5 .30 .20
+DD 6 .40 .20
+DD 7 .50 .20
+DD 8 .25 .30
+DD 9 .35 .30
+DD 10 .45 .30
+DD 11 .30 .40
+DD 12 .40 .40
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-30"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 30/45."
+END
+
+SECTION Graph
+Nodes 14
+END
+
+SECTION Coordinates
+DD 1 .50 .90
+DD 2 .82 .75
+DD 3 .89 .41
+DD 4 .68 .14
+DD 5 .32 .14
+DD 6 .12 .38
+DD 7 .19 .76
+DD 8 .39 .75
+DD 9 .62 .75
+DD 10 .76 .59
+DD 11 .72 .33
+DD 12 .50 .23
+DD 13 .29 .33
+DD 14 .24 .57
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-31"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 31/45."
+END
+
+SECTION Graph
+Nodes 19
+END
+
+SECTION Coordinates
+DD 1 .50 .90
+DD 2 .82 .75
+DD 3 .89 .41
+DD 4 .68 .14
+DD 5 .32 .14
+DD 6 .12 .38
+DD 7 .19 .76
+DD 8 .39 .75
+DD 9 .62 .75
+DD 10 .76 .59
+DD 11 .72 .33
+DD 12 .50 .23
+DD 13 .29 .33
+DD 14 .24 .57
+DD 15 .41 .58
+DD 16 .50 .62
+DD 17 .60 .58
+DD 18 .62 .47
+DD 19 .50 .50
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-32"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 32/45."
+END
+
+SECTION Graph
+Nodes 18
+END
+
+SECTION Coordinates
+DD 1 .10 .85
+DD 2 .25 .72
+DD 3 .38 .66
+DD 4 .53 .66
+DD 5 .65 .72
+DD 6 .80 .85
+DD 7 .68 .70
+DD 8 .61 .58
+DD 9 .61 .43
+DD 10 .68 .30
+DD 11 .80 .17
+DD 12 .65 .28
+DD 13 .45 .35
+DD 14 .25 .27
+DD 15 .10 .17
+DD 16 .23 .30
+DD 17 .30 .50
+DD 18 .23 .70
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-33"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 33/45."
+END
+
+SECTION Graph
+Nodes 19
+END
+
+SECTION Coordinates
+DD 1 .40 .54
+DD 2 .54 .63
+DD 3 .67 .54
+DD 4 .63 .38
+DD 5 .48 .35
+DD 6 .41 .41
+DD 7 .34 .38
+DD 8 .21 .48
+DD 9 .10 .39
+DD 10 .10 .27
+DD 11 .21 .21
+DD 12 .32 .28
+DD 13 .39 .22
+DD 14 .47 .27
+DD 15 .59 .24
+DD 16 .65 .12
+DD 17 .58 .03
+DD 18 .45 .02
+DD 19 .36 .10
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-34"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 34/45."
+END
+
+SECTION Graph
+Nodes 18
+END
+
+SECTION Coordinates
+DD 1 .48 .45
+DD 2 .54 .40
+DD 3 .53 .33
+DD 4 .45 .30
+DD 5 .38 .37
+DD 6 .40 .45
+DD 7 .25 .32
+DD 8 .22 .38
+DD 9 .15 .36
+DD 10 .12 .27
+DD 11 .16 .21
+DD 12 .23 .23
+DD 13 .34 .15
+DD 14 .42 .18
+DD 15 .48 .15
+DD 16 .45 .08
+DD 17 .38 .06
+DD 18 .33 .10
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-35"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 35/45."
+END
+
+SECTION Graph
+Nodes 4
+END
+
+SECTION Coordinates
+DD 1 .10 .08
+DD 2 .10 .20
+DD 3 .80 .20
+DD 4 .80 .28
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-36"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 36/45."
+END
+
+SECTION Graph
+Nodes 8
+END
+
+SECTION Coordinates
+DD 1 .25 .20
+DD 2 .31 .09
+DD 3 .39 .08
+DD 4 .48 .10
+DD 5 .48 .30
+DD 6 .56 .32
+DD 7 .64 .28
+DD 8 .70 .20
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-37"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 37/45."
+END
+
+SECTION Graph
+Nodes 14
+END
+
+SECTION Coordinates
+DD 1 .49 .06
+DD 2 .55 .13
+DD 3 .57 .23
+DD 4 .55 .30
+DD 5 .53 .36
+DD 6 .48 .44
+DD 7 .48 .59
+DD 8 .18 .59
+DD 9 .18 .44
+DD 10 .13 .36
+DD 11 .11 .26
+DD 12 .11 .18
+DD 13 .16 .11
+DD 14 .22 .06
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-38"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 38/45."
+END
+
+SECTION Graph
+Nodes 14
+END
+
+SECTION Coordinates
+DD 1 .24 .06
+DD 2 .49 .06
+DD 3 .55 .13
+DD 4 .57 .23
+DD 5 .55 .30
+DD 6 .53 .36
+DD 7 .48 .44
+DD 8 .48 .59
+DD 9 .18 .59
+DD 10 .18 .44
+DD 11 .13 .36
+DD 12 .11 .26
+DD 13 .11 .18
+DD 14 .16 .11
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-39"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 39/45."
+END
+
+SECTION Graph
+Nodes 10
+END
+
+SECTION Coordinates
+DD 1 .31 .69
+DD 2 .18 .60
+DD 3 .30 .50
+DD 4 .18 .40
+DD 5 .28 .31
+DD 6 .64 .69
+DD 7 .71 .58
+DD 8 .60 .50
+DD 9 .72 .37
+DD 10 .60 .30
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-40"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 40/45."
+END
+
+SECTION Graph
+Nodes 20
+END
+
+SECTION Coordinates
+DD 1 0 .40
+DD 2 0 .50
+DD 3 .03 .60
+DD 4 .10 .65
+DD 5 .20 .60
+DD 6 .20 .48
+DD 7 .30 .40
+DD 8 .37 .45
+DD 9 .39 .60
+DD 10 .45 .65
+DD 11 .50 .65
+DD 12 .54 .60
+DD 13 .54 .48
+DD 14 .63 .40
+DD 15 .70 .50
+DD 16 .72 .60
+DD 17 .80 .68
+DD 18 .89 .65
+DD 19 .90 .51
+DD 20 .90 .41
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-41"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 41/45."
+END
+
+SECTION Graph
+Nodes 15
+END
+
+SECTION Coordinates
+DD 1 .25 .11
+DD 2 .20 .13
+DD 3 .13 .20
+DD 4 .10 .30
+DD 5 .13 .40
+DD 6 .20 .48
+DD 7 .30 .50
+DD 8 .40 .48
+DD 9 .48 .40
+DD 10 .50 .30
+DD 11 .48 .20
+DD 12 .45 .17
+DD 13 .40 .13
+DD 14 .30 .10
+DD 15 .30 .30
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-42"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 42/45."
+END
+
+SECTION Graph
+Nodes 16
+END
+
+SECTION Coordinates
+DD 1 .62 .68
+DD 2 .73 .40
+DD 3 .72 .26
+DD 4 .56 .05
+DD 5 .34 0
+DD 6 .12 .10
+DD 7 .03 .32
+DD 8 .09 .53
+DD 9 .27 .62
+DD 10 .34 .40
+DD 11 .41 .37
+DD 12 .42 .30
+DD 13 .40 .27
+DD 14 .35 .27
+DD 15 .29 .31
+DD 16 .30 .37
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-43"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 43/45."
+END
+
+SECTION Graph
+Nodes 17
+END
+
+SECTION Coordinates
+DD 1 .05 .52
+DD 2 .05 .28
+DD 3 .14 .07
+DD 4 .24 .01
+DD 5 .46 .01
+DD 6 .65 .13
+DD 7 .72 .31
+DD 8 .70 .49
+DD 9 .58 .60
+DD 10 .43 .59
+DD 11 .37 .53
+DD 12 .38 .47
+DD 13 .46 .47
+DD 14 .46 .39
+DD 15 .39 .36
+DD 16 .34 .35
+DD 17 .30 .39
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-44"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 44/45."
+END
+
+SECTION Graph
+Nodes 19
+END
+
+SECTION Coordinates
+DD 1 .08 .08
+DD 2 .26 .05
+DD 3 .45 .08
+DD 4 .59 .18
+DD 5 .65 .34
+DD 6 .63 .53
+DD 7 .45 .66
+DD 8 .24 .61
+DD 9 .19 .42
+DD 10 .29 .35
+DD 11 .36 .35
+DD 12 .40 .38
+DD 13 .42 .43
+DD 14 .38 .48
+DD 15 .35 .49
+DD 16 .31 .47
+DD 17 .30 .45
+DD 18 .34 .43
+DD 19 .32 .43
+END
+
+EOF
+
+33D32945 STP File, STP Format Version 1.0
+
+SECTION Comments
+Name    "estein1-45"
+Creator "OR-Library" (J E Beasley)
+Problem "Rectilinear Steiner Minimum Tree"
+Remark  "Converted automatically, problem 45/45."
+END
+
+SECTION Graph
+Nodes 16
+END
+
+SECTION Coordinates
+DD 1 .20 .10
+DD 2 .20 .20
+DD 3 .20 .30
+DD 4 .20 .40
+DD 5 .30 .10
+DD 6 .30 .20
+DD 7 .30 .30
+DD 8 .30 .40
+DD 9 .40 .10
+DD 10 .40 .20
+DD 11 .40 .30
+DD 12 .40 .40
+DD 13 .50 .10
+DD 14 .50 .20
+DD 15 .50 .30
+DD 16 .50 .40
+END
+
+EOF
+

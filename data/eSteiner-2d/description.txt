@@ -1,0 +1,34 @@
+Euclidean Steiner problem
+
+There are currently 15 data files.
+
+These data files are the test problems solved in J.E.Beasley
+"A heuristic for Euclidean and rectilinear Steiner problems",
+European Journal of Operational Research 58 (1992) 284-292.
+
+These data files include the 46 test problems from J.Soukup
+and W.F.Chow "Set of test problems for the minimum length 
+connection networks" ACM/SIGMAP Newsletter 15 (1973) 48-51.
+
+The following table gives the relationship between test problems
+and the appropriate file.
+
+Number of points (n)    File
+10                      estein10
+20                      estein20
+30                      estein30
+40                      estein40
+50                      estein50
+60                      estein60
+70                      estein70
+80                      estein80
+90                      estein90
+100                     estein100
+250                     estein250
+500                     estein500
+1000                    estein1000
+10000                   estein10000
+
+The Soukup and Chow test problems are in data file estein1.
+
+The format is a concatenation of .STP problems.
