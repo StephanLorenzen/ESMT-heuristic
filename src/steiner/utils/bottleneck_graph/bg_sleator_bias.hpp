@@ -1,5 +1,5 @@
-#ifndef BG_SLEATOR_H
-#define BG_SLEATOR_H
+#ifndef BG_SLEATOR_BIAS_H
+#define BG_SLEATOR_BIAS_H
 
 #include <vector>
 
@@ -15,7 +15,7 @@ typedef Utils::Point Point;
  * Implements a lazy version of the Bottleneck Graph.
  * Bottleneck distances are calculated (and stored) when needed.
  */
-class BottleneckGraphSleator : public BottleneckGraph {
+class BottleneckGraphSleatorBias : public BottleneckGraph {
 public:
   /**
    * Constructor.
@@ -23,12 +23,12 @@ public:
    *
    * @param g   The graph to construct the Bottleneck Graph for.
    */
-  BottleneckGraphSleator(Graph &g);
+  BottleneckGraphSleatorBias(Graph &g);
 
   /**
    * Destructor
    */
-  ~BottleneckGraphSleator();
+  ~BottleneckGraphSleatorBias();
   
   /**
    * Gets the Bottleneck distance between points indexed by i and j
@@ -70,9 +70,13 @@ private:
     unsigned int height;
     
     int idx;
+
+    unsigned int size;
+    unsigned int w;
+    unsigned int rank;
   };
   typedef Vertex Path;
-
+  
   void _cleanUp(Vertex *v);
   
   // Static tree operations
@@ -129,12 +133,11 @@ private:
 
   Vertex *construct(Vertex *v, Vertex *w, double x);
   void destruct(Vertex *u, DestructResult &c);
+  void tiltleft(Vertex *v);
+  void tiltright(Vertex *v);
   void rotateleft(Vertex *v);
   void rotateright(Vertex *v);
   void unreverse(Vertex *v);
-  void balance(Vertex *v);
-  int balance_factor(Vertex *v);
-  bool is_balanced(Vertex *v);
   void tsplit(Vertex *v, bool right, DestructResult &dr);
   void treepath(Vertex *v, Vertex **r, bool &reversed, bool before);
     

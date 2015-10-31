@@ -20,8 +20,6 @@
 #include "steiner/heuristics/smith.hpp"
 #include "steiner/heuristics/concat.hpp"
 
-#include "steiner/utils/bottleneck_graph/bg_sleator.hpp"
-
 #define MAX_DIM     12
 
 typedef Utils::Point      Point;
@@ -68,7 +66,6 @@ int main(int argc, char *argv[]) {
       "-gn   --generateN     set_type:s dimension:i num_points:i num_tests:i \n"
       "-if   --infile        file:s set_name:s                               \n"
       "-ifa  --infileall     file:s                                          \n"
-      "-tsl  --testsleator br \n"
       "PARAMETERS:                                                           \n"
       "                                                                      \n"
       "file:s set_name:s                                                     \n"
@@ -76,15 +73,7 @@ int main(int argc, char *argv[]) {
     
     CLAP c(clap_config, argc, argv);
   
-    if(c.is_set("tsl")) {
-      Generator::setSeed(123);
-      std::vector<Point> ps = Generator::randomFloatPoints(Point(2, 100), Point(2, -100), 7);
-      Graph g(ps);
-      Utils::MSTKruskalMod(g, true);
-      BottleneckGraphSleator bgs(g);
-      return 0;
-    }
-    else if(c.is_set("testtopo")) {
+    if(c.is_set("testtopo")) {
       std::cout << "Running topo test!" << std::endl;
       std::string name("Smith iterative");
       std::string resFile("/home/stephan/Desktop/result.dat");
