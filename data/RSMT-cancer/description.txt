@@ -1,0 +1,21 @@
+The instances are derived from a problem in cancer genomics to model
+the progression of genetic changes in a solid tumor. In a normal cell,
+each gene on the numbered chromosomes 1-22 has two copies. One of the
+types of genetic changes observed in cancer cells is that the copy
+numbers of genes can increase to > 2 to decrease to < 2. Multi-color
+fluorescence in situ hybridization (FISH) can be used to measure
+simultaneously the copy numbers of multiple genes in a single cell.
+If data are collected on dozens or hundreds of cells in the same
+tumor, then one can model the progression of copy number changes from
+the normal all-2 state.  Chowdhury et al. (Bioinformatics 29(2013),
+pp. i189-i198) showed how to reduce the problem of modeling tumor
+progression to an instance of the Rectilinear Steiner Minimum Tree
+(RSMT) problem. The instances are derived from published data on breast 
+cancer, (Heselmeyer-Haddad et al., American Journal of Pathology
+181(2012), pp. 1807-1822), and prostate cancer (Heselmeyer-Haddad 
+et al., American Journal of Pathology, to appear in the October 2014 
+issue). Each point in d-dimensional space (in these instances d = 4,
+d = 6, and d = 8), represents the numbers of copies of d genes observed 
+simultaneously in at least one cell of the tumor. The directed Steiner 
+tree rooted at the all-2 state shows one model for how genomic changes 
+in the tumor may have progressed.   
