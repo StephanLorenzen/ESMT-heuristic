@@ -221,7 +221,7 @@ std::vector<Point> Utils::Generator::loadFromFile(std::string &path,
       case PSG_PARSE_STP_SEC_COMMENTS_WAIT:
 	if(tokens.size() != 2
 	   || tokens[0] != "SECTION"
-	   || tokens[1] != "Comments") {
+	   || (tokens[1] != "Comments" && tokens[1] != "Comment")) {
 	  std::cerr << "Utils::Generator::loadFromFile(...) - Format error. "
 		    << "Expected comments section, but read: " << std::endl
 		    << buffer << std::endl
@@ -272,14 +272,14 @@ std::vector<Point> Utils::Generator::loadFromFile(std::string &path,
 	  state = PSG_PARSE_STP_SEC_COORDS_WAIT;
 	}
 	else if(found) {
-	  if(tokens.size() != 2 || tokens[0] != "Nodes") {
+	  if(tokens.size() != 2 || (tokens[0] != "Nodes" && tokens[0] != "Obstacles")) {
 	    std::cerr << "Utils::Generator::loadFromFile(...) - Format error. "
-		      << "Expected 'Nodes' tag, but read: " << std::endl
+		      << "Expected 'Nodes' or 'Obstacles' tag, but read: " << std::endl
 		      << buffer << std::endl
 		      << "Exiting!" << std::endl;
 	    exit(1);
 	  }
-	  else {
+	  else if(tokens[0] == "Nodes") {
 	    std::istringstream(tokens[1]) >> no_of_nodes;
 	  }
 	}
