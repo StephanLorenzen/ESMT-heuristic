@@ -40,11 +40,11 @@ typedef Utils::Heap<SteinerTree>          Queue;
  */
 ESMT::ESMT(std::vector<Point> &points, SubgraphHeuristic *sh,
 	   bool concat_subgraphs, bool post_optimise, bool special_concat,
-	   unsigned int use_bg, bool verbose)
+	   unsigned int use_bd, unsigned int face_max_size, bool verbose)
   : SteinerTree(points), Iterative(points[0].dim(), points.size()),
     iterCon(points[0].dim()), sh(sh), concat_subgraphs(concat_subgraphs),
     post_optimise(post_optimise), special_concat(special_concat), verbose(verbose),
-    use_bg(use_bg)
+    use_bg(use_bd), face_max_size(face_max_size)
 {
   if(verbose)
     std::cout << "*** ESMT Heuristic ***" << std::endl;
@@ -58,11 +58,11 @@ ESMT::ESMT(std::vector<Point> &points, SubgraphHeuristic *sh,
  */
 ESMT::ESMT(Utils::Delaunay &del, SubgraphHeuristic *sh,
 	   bool concat_subgraphs, bool post_optimise, bool special_concat,
-	   unsigned int use_bg, bool verbose)
+	   unsigned int use_bd, unsigned int face_max_size, bool verbose)
   : SteinerTree(del.getPointsRef()), Iterative(del.dimension(), del.getPoints().size()),
     iterCon(del.dimension()), sh(sh), concat_subgraphs(concat_subgraphs),
     post_optimise(post_optimise), special_concat(special_concat), verbose(verbose),
-    use_bg(use_bg)
+    use_bg(use_bd), face_max_size(face_max_size)
 {
   if(verbose)
     std::cout << "*** ESMT Heuristic ***" << std::endl;
@@ -105,6 +105,8 @@ void ESMT::findESMT(Delaunay &del) {
     // Don't do special concat or concat subgraphs if use_bg
     this->concat_subgraphs = false;
     this->special_concat = false;
+    if(this->face_max_size <= 1)
+      this->face_max_size = this->dim + 1;
     // Check that there are not too many points:
     //  dim = 2 -> 64 / 2 ~= 32 bits available
     //  dim = 3 -> 64 / 3 ~= 21 bits available
@@ -825,10 +827,12 @@ void ESMT::findAllFaces() {
     // Add all faces of this simplex (if not added already)
     this->findAllFacesRec(*sit, cur_set, flag);
     // Add simplex
-    std::vector<Pidx> pidxs;
-    for(unsigned int i=0; i<sit->n; i++)
-      pidxs.push_back(sit->map[i]);
-    this->findFST(pidxs, edges);
+    if(this->dim+1 <= this->face_max_size) {
+      std::vector<Pidx> pidxs;
+      for(unsigned int i=0; i<sit->n; i++)
+	pidxs.push_back(sit->map[i]);
+      this->findFST(pidxs, edges);
+    }
   }
 
   // Add MST edges
@@ -859,22 +863,25 @@ void ESMT::findAllFacesRec(Simplex &simplex, std::vector<unsigned int> &cur_set,
       this->findFST(cur_set, edges);
     }
   }
-  int last = n > 0 ? cur_set.back() : -1;
-  for(i = 0; i < simplex.n; i++) {
-    // Add only larger than
-    if((int)simplex.map[i] > last) {
-      std::vector<unsigned int> new_set = cur_set;
-      new_set.push_back(simplex.map[i]);
-      this->findAllFacesRec(simplex, new_set, flag);
+  // Should we add more?
+  if(n+1 <= this->face_max_size) {
+    int last = n > 0 ? cur_set.back() : -1;
+    for(i = 0; i < simplex.n; i++) {
+      // Add only larger than
+      if((int)simplex.map[i] > last) {
+	std::vector<unsigned int> new_set = cur_set;
+	new_set.push_back(simplex.map[i]);
+	this->findAllFacesRec(simplex, new_set, flag);
+      }
     }
   }
 }
 
 /* Implementation of ESMT::findFST(...) */
 void ESMT::findFST(std::vector<unsigned int> &set, std::vector<Edge> &edges, unsigned int si) {
-  #if(ESMT_COLLECT_STATS)
+#if(ESMT_COLLECT_STATS)
   this->stats.faces[set.size()]++;
-  #endif
+#endif
   if(set.size() == 2) {
     edges.clear();
     edges.push_back(Edge(0,1));
@@ -890,6 +897,7 @@ void ESMT::findFST(std::vector<unsigned int> &set, std::vector<Edge> &edges, uns
     SteinerTree st(set, this->getPointsRef(), edges);
     if(use_bg)
       Utils::MSTKruskalMod(st, true);
+    
     st.setMSTLength(st.getLength());
     if(st.n() == 3)
       Utils::getFermatSMT(st);

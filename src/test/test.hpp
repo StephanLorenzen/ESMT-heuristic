@@ -45,6 +45,7 @@ public:
   void doPostOptimise(bool po=true);
   void doUseSpecialConcat(bool sct=true);
   void doUseBGraph(int type);
+  void setMaxFaceSize(int size);
   void doCollectStats(bool doCollect=true);
   void inclDelaunay(bool doDelaunay);
   void setLoopTime(int sec);
@@ -91,6 +92,7 @@ private:
   bool po;
   bool sct;
   int bgtype;
+  int max_face_size;
   bool collect_stats;
   bool do_delaunay;
   double quartiles[5];

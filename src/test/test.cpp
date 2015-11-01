@@ -76,6 +76,10 @@ void Test::doUseBGraph(int type) {
   this->bgtype = type;
 }
 
+void Test::setMaxFaceSize(int size) {
+  this->max_face_size = size;
+} 
+
 void Test::doCollectStats(bool doCollect) {
   this->collect_stats = doCollect;
 }
@@ -215,7 +219,7 @@ void Test::doTestESMTSpecial(int d, int n, int seed, bool verbose) {
   IterativeConcat ic(d);
   std::vector<Point> points = Generator::randomFloatPoints(Point(d,100), Point(d,100), n);
   Utils::Delaunay del(points);
-  ESMT esmt(del, &ic, true, true, false, verbose);
+  ESMT esmt(del, &ic, true, true, false, false, 0, verbose);
 
   std::vector<unsigned int> faces = del.getNumberOfFaces();
   
@@ -318,7 +322,8 @@ void Test::ESMTTest(int i, bool verbose, bool method_verbose) {
     do {
       if(esmt)
 	delete esmt;
-      esmt = new ESMT(del, this->sh, this->concat, this->po, this->sct, this->bgtype, method_verbose);
+      esmt = new ESMT(del, this->sh, this->concat, this->po, this->sct, this->bgtype,
+		      this->max_face_size, method_verbose);
       iterations++;
     }
     while((end_time = getTime()) < start_time + this->loop_time);
@@ -328,7 +333,8 @@ void Test::ESMTTest(int i, bool verbose, bool method_verbose) {
     do {
       if(esmt)
 	delete esmt;
-      esmt = new ESMT(points, this->sh, this->concat, this->po, this->sct, this->bgtype, method_verbose);
+      esmt = new ESMT(points, this->sh, this->concat, this->po, this->sct, this->bgtype,
+		      this->max_face_size, method_verbose);
       iterations++;
       method_verbose = false;
     }

@@ -43,11 +43,15 @@ public:
    * @param post_optimise      Determines wether post optimisation using Smith's
    *                           should be applied
    * @param special_concat     Redo concatenation, adding non-covered faces.
+   * @param use_bd             Use bottleneck distance.
+   * @param face_max_size      Face max size for considering in concatenation. Only applicable
+   *                           when use_bd != BOTTLENECK_DIST_NONE.
    * @param verbose            If true, stats will be printed.
    */
   ESMT(std::vector<Utils::Point> &points, SubgraphHeuristic *sh,
        bool concat_subgraphs, bool post_optimise, bool special_concat,
-       unsigned int use_bg = BOTTLENECK_GRAPH_NONE, bool verbose = false);
+       unsigned int use_bd = BOTTLENECK_GRAPH_NONE, unsigned int face_max_size = 0,
+       bool verbose = false);
 
 
   /**
@@ -63,11 +67,15 @@ public:
    * @param post_optimise      Determines wether post optimisation using Smith's
    *                           should be applied
    * @param special_concat     Redo concatenation, adding non-covered faces.
+   * @param use_bd             Use bottleneck distance.
+   * @param face_max_size      Face max size for considering in concatenation. Only applicable
+   *                           when use_bd != BOTTLENECK_DIST_NONE.
    * @param verbose            If true, stats will be printed.
    */
   ESMT(Utils::Delaunay &del, SubgraphHeuristic *sh,
        bool concat_subgraphs, bool post_optimise, bool special_concat,
-       unsigned int use_bg = BOTTLENECK_GRAPH_NONE, bool verbose = false);
+       unsigned int use_bd = BOTTLENECK_GRAPH_NONE, unsigned int face_max_size = 0,
+       bool verbose = false);
 
   /**
    * Destructor
@@ -353,6 +361,7 @@ private:
   /** Configurations */
   bool concat_subgraphs, post_optimise, special_concat, verbose;
   unsigned int use_bg;
+  unsigned int face_max_size;
 };
 
 #endif // ESMT_H

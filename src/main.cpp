@@ -52,7 +52,8 @@ int main(int argc, char *argv[]) {
       "-npo  --nopostopt                                                     \n"
       "-nsc  --nosubcon                                                      \n"
       "-rdc  --redocon                                                       \n"
-      "-ubg  --usebgraph     type:i                                          \n"
+      "-ubd  --usebdist      type:i                                          \n"
+      "-fms  --facemaxsize   type:i                                          \n"
       "-alg  --alg           name:s                                          \n"
       "-s    --seed          value:i                                         \n"
       "-pt   --printtree                                                     \n"
@@ -85,8 +86,8 @@ int main(int argc, char *argv[]) {
       std::vector<Point> points2 = Generator::loadFromFile(path, sname);
     
       IterativeSmith is(MAX_DIM);
-      ESMT e1(points1, &is, true, true, false, BOTTLENECK_GRAPH_NONE);
-      ESMT e2(points2, &is, true, true, false, BOTTLENECK_GRAPH_NONE);
+      ESMT e1(points1, &is, true, true, false);
+      ESMT e2(points2, &is, true, true, false);
     
       Test test;
       std::cout << test.testTopology(e1,e2) << std::endl;
@@ -126,7 +127,8 @@ int main(int argc, char *argv[]) {
 	no_post_optimise = c.is_set("npo"),
 	redo_concat = c.is_set("rdc");
       int seed = c.is_set("s") ? c.get_int_param("s") : time(NULL);
-      unsigned int use_bg = c.is_set("ubg") ? c.get_int_param("ubg") : 0;
+      unsigned int use_bd = c.is_set("ubd") ? c.get_int_param("ubd") : 0,
+	face_max_size = c.is_set("fms") ? c.get_int_param("fms") : 0;
     
       int p = c.get_chosen_pattern();
       if(p == 0 && !c.is_set("batch")) {
@@ -147,7 +149,8 @@ int main(int argc, char *argv[]) {
 	test.doConcatSubgraphs(!no_subgraph_concat);
 	test.doPostOptimise(!no_post_optimise);
 	test.doUseSpecialConcat(redo_concat);
-	test.doUseBGraph(use_bg);
+	test.doUseBGraph(use_bd);
+	test.setMaxFaceSize(face_max_size);
 	test.inclDelaunay(!c.is_set("nd"));
 	test.setLoopTime(c.is_set("lt") ? c.get_int_param("lt") : 0);
 	test.setSeed(seed);
@@ -218,8 +221,8 @@ int main(int argc, char *argv[]) {
 	    c.error_usage("Unknown point set type");
 	}
       
-	ESMT esmt(points, sh, !no_subgraph_concat,
-		  !no_post_optimise, redo_concat, use_bg, verbose);
+	ESMT esmt(points, sh, !no_subgraph_concat, !no_post_optimise,
+		  redo_concat, use_bd, face_max_size, verbose);
       
 	if(c.is_set("val")) {
 	  if(Utils::validate(esmt))
