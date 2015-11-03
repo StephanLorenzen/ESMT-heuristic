@@ -87,7 +87,7 @@ private:
   int seed;
   double max;
   double min;
-  long loop_time;
+  int loop_time;
   bool concat;
   bool po;
   bool sct;
