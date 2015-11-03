@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
+#include <chrono>
 
 #include "test/test.hpp"
 #include "steiner/graph.hpp"
@@ -25,6 +26,8 @@ typedef Utils::Point      Point;
 typedef Utils::Edge       Edge;
 typedef Utils::Generator  Generator;
 typedef Test::Result      Result;
+
+namespace Clock = std::chrono;
 
 Test::Test()
   : seed(0), max(100), min(-100),
@@ -273,10 +276,10 @@ void Test::doTestESMTSpecial(int d, int n, int seed, bool verbose) {
 }
 
 void Test::subgraphAlgTest(int i, bool verbose) {
-  double start_time, end_time;
   int iterations = 0;
   std::vector<Point> points = this->sets[i].points;
 
+  //auto start_time, end_time;
   // Make all possible edges. Needed for mst calculation
   Graph g(points);
   Utils::MSTKruskalMod(g, true);
@@ -284,18 +287,21 @@ void Test::subgraphAlgTest(int i, bool verbose) {
   SteinerTree st(g.getPoints(), g.getPointsRef(), g.getEdges());
   SteinerTree s = st;
 
-  start_time = getTime();
+  auto start_time = Clock::high_resolution_clock::now();
+  auto end_time = start_time;
   do {
     s = st;
     this->sh->findSteinerPoints(s);
     iterations++;
+    end_time = Clock::high_resolution_clock::now();
+    
   }
-  while((end_time = getTime()) < start_time + this->loop_time);
+  while(Clock::duration_cast<Clock::microseconds>(end_time-start_time).count() < (double)this->loop_time);
   
   s.setSMTLength(s.getLength());
   s.computeRatios();
   Result res;
-  res.time          = ((double)(end_time-start_time)) / iterations;
+  res.time          = (double)(Clock::duration_cast<Clock::microseconds>(end_time-start_time).count()) / (1000000*iterations);
   res.ratio         = s.getSteinerRatio();
   this->mean_time  += res.time;
   this->mean_ratio += res.ratio;
@@ -311,25 +317,26 @@ void Test::subgraphAlgTest(int i, bool verbose) {
 }
 
 void Test::ESMTTest(int i, bool verbose, bool method_verbose) {
-  double start_time, end_time;
+  auto start_time = Clock::high_resolution_clock::now(), end_time = start_time;
   int iterations = 0;
   std::vector<Point> points = this->sets[i].points;
   ESMT *esmt = NULL;
   std::vector<unsigned int> faces;
   if(!this->do_delaunay) {
     Utils::Delaunay del(points);
-    start_time = getTime();
+    start_time = Clock::high_resolution_clock::now();
     do {
       if(esmt)
 	delete esmt;
       esmt = new ESMT(del, this->sh, this->concat, this->po, this->sct, this->bgtype,
 		      this->max_face_size, method_verbose);
       iterations++;
+      end_time = Clock::high_resolution_clock::now();
     }
-    while((end_time = getTime()) < start_time + this->loop_time);
+    while(Clock::duration_cast<Clock::microseconds>(end_time-start_time).count() < this->loop_time);
   }
   else {
-    start_time = getTime();
+    start_time = Clock::high_resolution_clock::now();
     do {
       if(esmt)
 	delete esmt;
@@ -337,11 +344,12 @@ void Test::ESMTTest(int i, bool verbose, bool method_verbose) {
 		      this->max_face_size, method_verbose);
       iterations++;
       method_verbose = false;
+      end_time = Clock::high_resolution_clock::now();
     }
-    while((end_time = getTime()) < start_time + this->loop_time);
+    while(Clock::duration_cast<Clock::microseconds>(end_time-start_time).count() < this->loop_time);
   }
   Result res;
-  res.time          = ((double)(end_time-start_time)) / iterations;
+  res.time          = (double)(Clock::duration_cast<Clock::microseconds>(end_time-start_time).count()) / (1000000*iterations);
   res.ratio         = esmt->getSteinerRatio();
   res.smt           = esmt->getSMTLength();
   res.mst           = esmt->getMSTLength();
@@ -472,13 +480,6 @@ void Test::printHeader(const std::string &text) {
   for(int i = 0; i < width; i++)
     std::cout << "#";
   std::cout << std::endl;
-}
-
-/*
- * Gets the time since program start in seconds
- */
-int Test::getTime() {
-  return clock() / CLOCKS_PER_SEC;
 }
 
 /*
