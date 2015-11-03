@@ -41,11 +41,11 @@ public:
   double distance(const unsigned int i, const unsigned int j);
 
   /**
-   * Merges the given points
+   * Contracts the given points
    *
-   * @param points The set of points (indices) to be merged
+   * @param points The set of points (indices) to be contracted
    */
-   virtual void mergePoints(const std::vector<unsigned int> &points);
+   virtual void contract(const std::vector<unsigned int> &points);
   
 protected:
   /** struct used for storing edges */

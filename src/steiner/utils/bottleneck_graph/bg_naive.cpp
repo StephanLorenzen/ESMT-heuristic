@@ -17,17 +17,13 @@ BottleneckGraphNaive::BottleneckGraphNaive(Graph &g) : BottleneckGraphSimple(g) 
 BottleneckGraphNaive::~BottleneckGraphNaive() { }
 
 /*
- * Implementation of BottleneckGraphNaive::mergePoints(...)
+ * Implementation of BottleneckGraphNaive::contract(...)
  */
-void BottleneckGraphNaive::mergePoints(const std::vector<unsigned int> &points) {
-  BottleneckGraphSimple::mergePoints(points);
+void BottleneckGraphNaive::contract(const std::vector<unsigned int> &points) {
+  BottleneckGraphSimple::contract(points);
   // Do the recompute
   this->_recompute();
 }
-
-/*unsigned int BottleneckGraphNaive::_getEdgeIndex(const unsigned int i, const unsigned int j) {
-  return BottleneckGraphSimple::_getEdgeIndex(i,j);
-  }*/
 
 /*
  * Implementation of BottleneckGraphNaive::_recompute()

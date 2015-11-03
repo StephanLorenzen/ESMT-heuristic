@@ -43,9 +43,9 @@ double BottleneckGraphSimple::distance(const unsigned int i, const unsigned int 
 }
 
 /**
- * Implementation of BottleneckGraphSimple::mergePoints(...)
+ * Implementation of BottleneckGraphSimple::contract(...)
  */
-void BottleneckGraphSimple::mergePoints(const std::vector<unsigned int> &points) {
+void BottleneckGraphSimple::contract(const std::vector<unsigned int> &points) {
   if(points.size() < 2)
     return;
   

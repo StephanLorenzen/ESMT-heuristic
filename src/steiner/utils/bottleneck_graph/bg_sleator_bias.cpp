@@ -72,9 +72,9 @@ double BottleneckGraphSleatorBias::distance(const unsigned int i, const unsigned
 }
 
 /**
- * Implementation of BottleneckGraphSleatorBias::mergePoints(...)
+ * Implementation of BottleneckGraphSleatorBias::contract(...)
  */
-void BottleneckGraphSleatorBias::mergePoints(const std::vector<unsigned int> &points) {
+void BottleneckGraphSleatorBias::contract(const std::vector<unsigned int> &points) {
   if(points.size() < 2)
     return;
   

@@ -31,22 +31,14 @@ public:
   ~BottleneckGraphNaive();
 
   /**
-   * Merges all of the points in the given vector, and recomputes the Bottleneck Graph
+   * Contracts all of the points in the given vector, and recomputes the Bottleneck Graph
    *
-   * @param points  The points (indicies) to be merged
+   * @param points  The points (indicies) to be contracted
    */
-  void mergePoints(const std::vector<unsigned int> &points);
+  void contract(const std::vector<unsigned int> &points);
 
 protected:
-private:
-  /**
-   * Get the index in this->edges of the bottleneck edge for the two given points
-   *
-   * @param i  The first point
-   * @param j  The second point
-   */
-  //unsigned int _getEdgeIndex(const unsigned int i, const unsigned int j);
-  
+private:  
   /**
    * Recomputes all bottleneck distances.
    */

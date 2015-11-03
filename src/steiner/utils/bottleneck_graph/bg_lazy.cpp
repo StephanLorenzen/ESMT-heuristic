@@ -16,10 +16,10 @@ BottleneckGraphLazy::BottleneckGraphLazy(Graph &g) : BottleneckGraphSimple(g) { 
 BottleneckGraphLazy::~BottleneckGraphLazy() { }
 
 /**
- * Implementation of BottleneckGraphLazy::mergePoints(...)
+ * Implementation of BottleneckGraphLazy::contract(...)
  */
-void BottleneckGraphLazy::mergePoints(const std::vector<unsigned int> &points) {
-  BottleneckGraphSimple::mergePoints(points);
+void BottleneckGraphLazy::contract(const std::vector<unsigned int> &points) {
+  BottleneckGraphSimple::contract(points);
   this->bdist.clear();
 }
 

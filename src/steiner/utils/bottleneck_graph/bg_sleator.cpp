@@ -69,9 +69,9 @@ double BottleneckGraphSleator::distance(const unsigned int i, const unsigned int
 }
 
 /**
- * Implementation of BottleneckGraphSleator::mergePoints(...)
+ * Implementation of BottleneckGraphSleator::contract(...)
  */
-void BottleneckGraphSleator::mergePoints(const std::vector<unsigned int> &points) {
+void BottleneckGraphSleator::contract(const std::vector<unsigned int> &points) {
   if(points.size() < 2)
     return;
   

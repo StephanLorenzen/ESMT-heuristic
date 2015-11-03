@@ -52,11 +52,11 @@ public:
   void setBMSTLength(Graph &g);
 
   /**
-   * Merges the given points
+   * Contracts the given points
    *
-   * @param points The set of points (indices) to be merged
+   * @param points The set of points (indices) to be contracted
    */
-  virtual void mergePoints(const std::vector<unsigned int> &points) = 0;
+  virtual void contract(const std::vector<unsigned int> &points) = 0;
   
 protected:
   std::vector<Point> &points;

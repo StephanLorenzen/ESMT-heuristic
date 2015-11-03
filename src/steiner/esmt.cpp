@@ -368,7 +368,7 @@ void ESMT::doConcatenateWithBottleneck() {
       if(c >= this->n())
 	break;
       // Update B-graph
-      this->bgraph->mergePoints(st.getPoints());
+      this->bgraph->contract(st.getPoints());
     }
     else {
       // Not up to date - update it and reinsert in Queue

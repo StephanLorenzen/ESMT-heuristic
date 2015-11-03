@@ -40,12 +40,12 @@ public:
   double distance(const unsigned int i, const unsigned int j);
 
   /**
-   * Merges all of the points in the given vector, and recomputes the Bottleneck Graph
+   * Contracts all of the points in the given vector, and recomputes the Bottleneck Graph
    *
-   * @param points  The points (indicies) to be merged
+   * @param points  The points (indicies) to be contracted
    */
-  void mergePoints(const std::vector<unsigned int> &points);
-
+  void contract(const std::vector<unsigned int> &points);
+  
 protected:
 private:
 
