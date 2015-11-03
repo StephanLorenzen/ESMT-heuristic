@@ -92,7 +92,7 @@ void Test::inclDelaunay(bool doDelaunay) {
 }
 
 void Test::setLoopTime(int sec) {
-  this->loop_time = sec;
+  this->loop_time = sec*1000000L;
 }
 
 void Test::setSubgraphHeuristicOne(SubgraphHeuristic *sh, std::string &name) {
