@@ -44,33 +44,36 @@ int set_type_from_name(std::string &settype) {
 int main(int argc, char *argv[]) {
   try {
     const std::string clap_config =
-      "OPTIONS:                                                              \n"
-      "-os   --onlysgh                                                       \n"
-      "-ct   --counttest  br dimension:i num_points:i seed:i                 \n"
-      "-tt   --testtopo   br                                                 \n"
-      "-v    --verbose                                                       \n"
-      "-npo  --nopostopt                                                     \n"
-      "-nsc  --nosubcon                                                      \n"
-      "-rdc  --redocon                                                       \n"
-      "-ubd  --usebdist      type:i                                          \n"
-      "-fms  --facemaxsize   type:i                                          \n"
-      "-alg  --alg           name:s                                          \n"
-      "-s    --seed          value:i                                         \n"
-      "-pt   --printtree                                                     \n"
-      "-val  --validate                                                      \n"
-      "-nd   --nodelaunay                                                    \n"
-      "-st   --stats                                                         \n"
-      "-out  --outfile       path:s                                          \n"
-      "-lt   --looptime      sec:i                                           \n"
-      "-b    --batch                                                         \n"
-      "-g    --generate      set_type:s dimension:i num_points:i             \n"
-      "-gn   --generateN     set_type:s dimension:i num_points:i num_tests:i \n"
-      "-if   --infile        file:s set_name:s                               \n"
-      "-ifa  --infileall     file:s                                          \n"
-      "PARAMETERS:                                                           \n"
-      "                                                                      \n"
-      "file:s set_name:s                                                     \n"
-      "set_type:s dimension:i num_points:i                                   \n";
+      "DESCRIPTION: \n"
+      "file is a STP file and name is the name of a set in that file.\n"
+      "type is a set type (random, grid, sausage), d is the dimension and n is the number of points to generate.\n"
+      "OPTIONS: \n"
+      "-os   --onlysgh                           'Test only subgraph heuristic. Use with -b option.' \n"
+      "-ct   --counttest  br d:i n:i s:i         'Run the count test.' \n"
+      "-tt   --testtopo   br                     'Run the topology test.' \n"
+      "-v    --verbose                           'Print info during execution.' \n"
+      "-npo  --nopostopt                         'Disable fine tuning.' \n"
+      "-nsc  --nosubcon                          'Disable subgraph concatenation/sausages.' \n"
+      "-rdc  --redocon                           'Enable concatenation redo.' \n"
+      "-ubd  --usebdist      type:i              'Use bottleneck distances. type must be 1 (table computation), 2 (lazy computation) or 3 (dyn. trees).' \n"
+      "-k    --facemaxsize   type:i              'Set the maximum face size to consider for concatenation. Only applicable when using -ubd.' \n"
+      "-alg  --alg           name:s              'Set the subgraph heuristic to use. Must be NO, RNO or SP.' \n"
+      "-s    --seed          s:i                 'Use seed s for generating random point sets.' \n"
+      "-pt   --printtree                         'Print tree when done.' \n"
+      "-val  --validate                          'Validate tree when done.' \n"
+      "-nd   --nodelaunay                        'Do not include Delaunay in timing. Use with -b option.' \n"
+      "-st   --stats                             'Collect extra stats.' \n"
+      "-out  --outfile       path:s              'File to store results in. Use with -b option.' \n"
+      "-lt   --looptime      t:i                 'Run tests in a loop for t seconds. Use with -b option.' \n"
+      "-b    --batch                             'Run as a batch and time runs. Add tests with -g, -gn, -if and -ifa' \n"
+      "-g    --generate      type:s d:i n:i      'Generate a point set of size n in d dimensions. type must be random, grid or sausage. Use with -b option.' \n"
+      "-gn   --generateN     type:s d:i n:i m:i  'Generate m point sets of size n in d dimensions. set_type must be random, grid or sausage. Use with -b option.' \n"
+      "-if   --infile        file:s name:s       'Read set with given name from file. Use with -b option.' \n"
+      "-ifa  --infileall     file:s              'Read all sets from a file. Use with -b option.' \n"
+      "PARAMETERS: \n"
+      "\n"
+      "file:s name:s \n"
+      "type:s d:i n:i \n";
     
     CLAP c(clap_config, argc, argv);
   
@@ -128,7 +131,7 @@ int main(int argc, char *argv[]) {
 	redo_concat = c.is_set("rdc");
       int seed = c.is_set("s") ? c.get_int_param("s") : time(NULL);
       unsigned int use_bd = c.is_set("ubd") ? c.get_int_param("ubd") : 0,
-	face_max_size = c.is_set("fms") ? c.get_int_param("fms") : 0;
+	face_max_size = c.is_set("k") ? c.get_int_param("k") : 0;
     
       int p = c.get_chosen_pattern();
       if(p == 0 && !c.is_set("batch")) {

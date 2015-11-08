@@ -18,11 +18,14 @@ all: $(MAIN) $(OBJECTS)
 %.o: %.cpp
 	g++ $(CFLAGS) -c -o $@ $^
 
-$(MAIN): $(OBJECTS)
+libclap/clap.o: libclap/clap.cpp
+	$(MAKE) -C libclap
+
+$(MAIN): $(OBJECTS) libclap/clap.o
 	$(CC) -o $(MAIN) $(OBJECTS) libclap/clap.o
 
 clean:
-	rm -f $(MAIN) $(OBJECTS)
+	rm -f $(MAIN) $(OBJECTS) libclap/clap.o
 
 run:
 	./$(MAIN)
