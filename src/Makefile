@@ -1,6 +1,8 @@
 CC=g++
 # Add -DNDEBUG and -O2 in CFLAGS before testing
-CFLAGS=-Wall -I./ -Wfatal-errors # -O2 -DNDEBUG
+CFLAGS=-Wall -I./ -Wfatal-errors  -O2 -DNDEBUG
+# Uncomment line below to allow for batches
+#CFLAGS+=-DESMT_TEST_MODE
 
 MAIN=esmt-heuristic
 
