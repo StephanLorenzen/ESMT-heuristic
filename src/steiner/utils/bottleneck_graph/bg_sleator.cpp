@@ -23,7 +23,6 @@ BottleneckGraphSleator::BottleneckGraphSleator(Graph &g)
     this->_vertices[i].external = true;
     this->_vertices[i].reversed = false;
     this->_vertices[i].height   = 1;
-    this->_vertices[i].idx      = i;
     this->_vertices[i].cost     = 0;
     this->_vertices[i].maxcost  = 0;
   }
@@ -386,7 +385,6 @@ BottleneckGraphSleator::Vertex *BottleneckGraphSleator::construct(Vertex *v, Ver
     r->cost     = x;
     r->maxcost  = u->maxcost > w->maxcost ? u->maxcost : w->maxcost;
     r->maxcost  = r->maxcost > x ? r->maxcost : x;
-    r->idx      = r->bhead->idx*10+r->btail->idx;
     r->dparent  = NULL;
     r->dcost    = 0.0;
     r->height   = (u->height > w->height ? u->height : w->height) + 1;
@@ -435,7 +433,6 @@ BottleneckGraphSleator::Vertex *BottleneckGraphSleator::construct(Vertex *v, Ver
     r->cost     = x;
     r->maxcost  = u->maxcost > v->maxcost ? u->maxcost : v->maxcost;
     r->maxcost  = r->maxcost > x ? r->maxcost : x;
-    r->idx      = r->bhead->idx*10+r->btail->idx;
     r->dparent  = NULL;
     r->dcost    = 0.0;
     r->height   = (u->height > v->height ? u->height : v->height) + 1;
@@ -461,7 +458,6 @@ BottleneckGraphSleator::Vertex *BottleneckGraphSleator::construct(Vertex *v, Ver
     r->cost     = x;
     r->maxcost  = w->maxcost > v->maxcost ? w->maxcost : v->maxcost;
     r->maxcost  = r->maxcost > x ? r->maxcost : x;
-    r->idx      = this->head(v)->idx*10+this->tail(w)->idx;
     r->dparent  = NULL;
     r->dcost    = 0.0;
     r->height   = (w->height > v->height ? w->height : v->height) + 1;

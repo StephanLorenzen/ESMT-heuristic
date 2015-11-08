@@ -68,8 +68,6 @@ private:
     double dcost;
     
     unsigned int height;
-    
-    int idx;
   };
   typedef Vertex Path;
 
