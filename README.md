@@ -31,8 +31,8 @@ Usage:
  esmt-heuristic [Options] <type> <d> <n>
 
 file is a STP file and name is the name of a set in that file.
-type is a set type (random, grid, sausage), d is the dimension and n is the number of points to
-generate.
+type is a set type (random, grid, sausage), d is the dimension and n is the number of
+points to generate.
 
 Options:
  -h    --help               Prints this help
@@ -40,10 +40,10 @@ Options:
  -npo  --nopostopt          Disable fine tuning.
  -nsc  --nosubcon           Disable subgraph concatenation/sausages.
  -rdc  --redocon            Enable concatenation redo.
- -ubd  --usebdist     type  Use bottleneck distances. type must be 1 (table computation), 2 (lazy
-                            computation) or 3 (dyn. trees).
- -k    --facemaxsize  type  Set the maximum face size to consider for concatenation. Only
-                            applicable when using -ubd.
+ -ubd  --usebdist     type  Use bottleneck distances. type must be 1 (table computation),
+                            2 (lazy computation) or 3 (dyn. trees).
+ -k    --facemaxsize  type  Set the maximum face size to consider for concatenation.
+                            Only applicable when using -ubd.
  -alg  --alg          name  Set the subgraph heuristic to use. Must be NO, RNO or SP.
  -s    --seed         s     Use seed s for generating random point sets.
  -pt   --printtree          Print tree when done.
