@@ -286,6 +286,7 @@ void Test::subgraphAlgTest(int i, bool verbose) {
   Utils::MSTKruskalMod(g, true);
   g.setMSTLength(g.getLength());
   SteinerTree st(g.getPoints(), g.getPointsRef(), g.getEdges());
+  st.setMSTLength(st.getLength());
   SteinerTree s = st;
 
   auto start_time = Clock::now();
