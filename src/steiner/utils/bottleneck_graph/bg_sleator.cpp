@@ -90,7 +90,7 @@ void BottleneckGraphSleator::contract(const std::vector<unsigned int> &points) {
 
   this->evert(&this->_vertices[points[0]]);
   for(unsigned int i=1; i<points.size(); i++)
-    this->link(&this->_vertices[points[0]], &this->_vertices[points[i]], 0.0);
+    this->link(&this->_vertices[points[i-1]], &this->_vertices[points[i]], 0.0);
 }
 
 // Static tree operations
