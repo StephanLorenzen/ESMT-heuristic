@@ -123,7 +123,7 @@ void BottleneckGraphSimple::_traverse(const unsigned int p, const unsigned int c
       // Get edge
       BottleneckGraphSimple::_edge &e = this->edges[nextEdge];
       unsigned int next = cur == e.p ? e.q : e.p;
-      this->_traverse(p, next, nextEdge, e.dist > carry ? nextEdge : mEdge);
+      this->_traverse(p, next, nextEdge, (p == cur || e.dist > carry) ? nextEdge : mEdge);
     }
   }  
 }

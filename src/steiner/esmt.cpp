@@ -22,7 +22,7 @@
 #include "steiner/utils/bottleneck_graph/bg_sleator.hpp"
 #include "steiner/utils/bottleneck_graph/bg_sleator_bias.hpp"
 
-#define ESMT_COLLECT_STATS  1
+#define ESMT_COLLECT_STATS  0
 
 /*
  * Utils type definitions
@@ -101,6 +101,23 @@ void ESMT::findESMT(Delaunay &del) {
   this->dim = del.dimension();
   this->N = this->n();
 
+  this->edges              = del.getEdges();
+  this->simplices          = del.getSimplices();
+  this->is_covered_simplex = std::vector<bool>(this->simplices.size(), false);
+  
+#if(ESMT_COLLECT_STATS)
+  this->stats.no_of_simplices = this->simplices.size();
+  this->stats.faces = std::vector<unsigned int>(this->dim+2, 0);
+#endif
+
+  if(this->verbose) {
+    std::cout << "Delaunay done!" << std::endl
+	      << "  Simplices:  " << this->simplices.size() << std::endl;
+  }
+
+  // Get the mst.
+  Utils::MSTKruskalMod(*this);
+  
   if(this->use_bg) {
     // Don't do special concat or concat subgraphs if use_bg
     this->concat_subgraphs = false;
@@ -120,29 +137,14 @@ void ESMT::findESMT(Delaunay &del) {
     }
     
     switch(use_bg) {
-    case BOTTLENECK_GRAPH_NAIVE:   this->bgraph = new BottleneckGraphNaive(del);       break;
-    case BOTTLENECK_GRAPH_LAZY:    this->bgraph = new BottleneckGraphLazy(del);        break;
-    case BOTTLENECK_GRAPH_SLEATOR: this->bgraph = new BottleneckGraphSleator(del);     break;
-    case BOTTLENECK_GRAPH_BIAS:    this->bgraph = new BottleneckGraphSleatorBias(del); break;
-    default:                       this->bgraph = new BottleneckGraphNaive(del);       break;
+    case BOTTLENECK_GRAPH_NAIVE:   this->bgraph = new BottleneckGraphNaive(*this);       break;
+    case BOTTLENECK_GRAPH_LAZY:    this->bgraph = new BottleneckGraphLazy(*this);        break;
+    case BOTTLENECK_GRAPH_SLEATOR: this->bgraph = new BottleneckGraphSleator(*this);     break;
+    case BOTTLENECK_GRAPH_BIAS:    this->bgraph = new BottleneckGraphSleatorBias(*this); break;
+    default:                       this->bgraph = new BottleneckGraphNaive(*this);       break;
     }
   }
-  this->edges              = del.getEdges();
-  this->simplices          = del.getSimplices();
-  this->is_covered_simplex = std::vector<bool>(this->simplices.size(), false);
   
-#if(ESMT_COLLECT_STATS)
-  this->stats.no_of_simplices = this->simplices.size();
-  this->stats.faces = std::vector<unsigned int>(this->dim+2, 0);
-#endif
-
-  if(this->verbose) {
-    std::cout << "Delaunay done!" << std::endl
-	      << "  Simplices:  " << this->simplices.size() << std::endl;
-  }
-  
-  // Get the mst.
-  Utils::MSTKruskalMod(*this);
   // Mark entries in is_MST
   std::vector<Edge>::iterator eit;
   for(eit = this->edges.begin(); eit != this->edges.end(); ++eit)
