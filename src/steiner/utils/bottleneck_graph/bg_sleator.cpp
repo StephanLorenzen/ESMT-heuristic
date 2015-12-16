@@ -26,7 +26,6 @@ BottleneckGraphSleator::BottleneckGraphSleator(Graph &g)
     this->_vertices[i].cost     = 0;
     this->_vertices[i].maxcost  = 0;
   }
-  Utils::MSTKruskalMod(g);
   // Traverse tree
   std::vector<Edge> &edges = g.getEdges();
   for(unsigned int i = 0; i < edges.size(); i++) {

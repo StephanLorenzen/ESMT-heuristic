@@ -16,8 +16,7 @@ BottleneckGraphSimple::BottleneckGraphSimple(Graph &g)
   : BottleneckGraph(g), connections(g.n()), edges(g.n()-1)
 {
   // Compute MST
-  std::vector<Edge> edges;
-  Utils::MSTKruskalEdges(g, edges);
+  std::vector<Edge> &edges = g.getEdges();
   
   // Setup connection lists
   for(unsigned int i=0; i<edges.size(); i++) {
