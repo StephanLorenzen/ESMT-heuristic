@@ -32,6 +32,11 @@ void IterativeSmith::setDoCleanUp(bool doCleanUp) {
 }
 
 /**
+ * Implementation of IterativeSmith::setDoCleanUp(...)
+ */
+void IterativeSmith::setDoSortInput(bool doSortInput) { /* Do nothing */ }
+
+/**
  * Finds the steiner points and edges.
  */
 void IterativeSmith::findSteinerPoints(SteinerTree &subgraph) {

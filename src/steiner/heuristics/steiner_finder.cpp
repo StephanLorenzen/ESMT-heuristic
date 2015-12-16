@@ -28,6 +28,11 @@ void SteinerFinder::setDoCleanUp(bool doCleanUp) {
   return; // Not supported here
 }
 
+/**
+ * Implementation of SteinerFinder::setDoCleanUp(...)
+ */
+void SteinerFinder::setDoSortInput(bool doSortInput) { /* Do nothing */ }
+
 void SteinerFinder::findSteinerPoints(SteinerTree &subgraph) {
   unsigned int i;
   

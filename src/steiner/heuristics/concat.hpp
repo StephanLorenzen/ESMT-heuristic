@@ -15,7 +15,7 @@ public:
   /**
    * Constructor
    */
-  IterativeConcat(int dim, bool doCleanUp = false);
+  IterativeConcat(int dim, bool doCleanUp = false, bool doSortInput = false);
   
   /**
    * Destructor
@@ -45,6 +45,13 @@ public:
    * @param doCleanUp  the new value of doCleanUp
    */
   void setDoCleanUp(bool doCleanUp);
+
+  /**
+   * Setter for the doSortInput flag
+   *
+   * @param doSortInput  the new value of doSortInput
+   */
+  void setDoSortInput(bool doSortInput);
   
 protected:
 private:
@@ -59,6 +66,7 @@ private:
   
   int topo_vec[CNMAX][2];
   bool do_clean_up;
+  bool do_sort_input;
 };
 
 #endif // ITERATIVE_CONCAT_H

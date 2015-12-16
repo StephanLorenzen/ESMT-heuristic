@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <cstdlib>
 #include <cmath>
+#include <algorithm>
 
 #include "steiner/graph.hpp"
 #include "steiner/steiner_tree.hpp"
@@ -16,7 +17,8 @@ typedef Utils::Edge  Edge;
 /**
  * Constructor
  */
-IterativeConcat::IterativeConcat(int dim, bool doCleanUp) : SubgraphHeuristic(), Iterative(dim, CNMAX), do_clean_up(doCleanUp) {}
+IterativeConcat::IterativeConcat(int dim, bool doCleanUp, bool doSortInput)
+  : SubgraphHeuristic(), Iterative(dim, CNMAX), do_clean_up(doCleanUp), do_sort_input(doSortInput) {}
 
 /**
  * Destructor
@@ -28,6 +30,13 @@ IterativeConcat::~IterativeConcat() {}
  */
 void IterativeConcat::setDoCleanUp(bool doCleanUp) {
   this->do_clean_up = doCleanUp;
+}
+
+/**
+ * Implementation of IterativeConcat::setDoCleanUp(...)
+ */
+void IterativeConcat::setDoSortInput(bool doSortInput) {
+  this->do_sort_input = doSortInput;
 }
 
 /*
@@ -48,7 +57,12 @@ void IterativeConcat::findSteinerPoints(SteinerTree &subgraph) {
   assert(n < CNMAX);
   
   this->N = n;
-  
+
+  if(this->do_sort_input) {
+    std::vector<Pidx> &pidxs = subgraph.getPoints();
+    std::sort(pidxs.begin(), pidxs.end());
+  }
+
   // Copy points (+ SP dummies)
   this->P = std::vector<Point>();
   this->P.reserve(2*this->N-2);

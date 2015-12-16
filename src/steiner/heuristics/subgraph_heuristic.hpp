@@ -41,6 +41,13 @@ public:
    */
   virtual void setDoCleanUp(bool doCleanUp) = 0;
 
+  /**
+   * Setter for the doSortInput flag. If true, input will be sorted according to pidx.
+   *
+   * @param doSortInput  the new value of doSortInput
+   */
+  virtual void setDoSortInput(bool doSortInput) = 0;
+
 protected:
 private:
 };

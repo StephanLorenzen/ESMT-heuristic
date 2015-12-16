@@ -42,6 +42,13 @@ public:
    * @param doCleanUp  the new value of doCleanUp
    */
   void setDoCleanUp(bool doCleanUp);
+
+  /**
+   * Setter for the doSortInput flag. This has no effect for numerical optimisation
+   *
+   * @param doSortInput  the new value of doSortInput
+   */
+  void setDoSortInput(bool doSortInput);
   
 protected:
 private:

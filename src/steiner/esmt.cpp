@@ -97,6 +97,7 @@ void ESMT::findESMT(Delaunay &del) {
   
   assert(this->sh);
   this->sh->setDoCleanUp(this->use_bg);
+  this->sh->setDoSortInput(!this->use_bg);
   
   this->dim = del.dimension();
   this->N = this->n();
