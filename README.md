@@ -1,18 +1,26 @@
-# Heuristic for the Euclidean Steiner Minimal Tree in any dimension
+# The DB-heuristic for the Euclidean Steiner Minimal Tree in any dimension
 
 ![](esmt-3d.png)
 
-This heuristic is an extended version of the heuristic presented in the paper
+The DB-heuristic utilizes the **D**elaunay-triangulation and **B**ottlenect distances in order to find solutions to the Euclidean Steiner Minimal Tree (ESTP) problem. In ESTP, we seek a network of minimal total edge length spanning a set of n terminal points while allowing for the insertion of additional points (Steiner points) to decrease the overall length of the network. 
+
+The DB-heuristic is described in detail in the paper
+
+* [Steiner Tree Heuristic in the Euclidean d-Space Using Bottleneck Distances]().
+
+It extends the earlier DM-heuristic, which utilizes **D**elaunay triangulation and the **M**inimum spanning tree, presented in the paper
 
 * [Euclidean Steiner Tree Heuristic in d-Space](http://dimacs11.cs.princeton.edu/workshop/OlsenLorenzenFonsecaWinter.pdf). A.E. Olsen, S.S. Lorenzen, R. Fonseca and P. Winter.
 
-The code for the original heuristic can be found [here](https://github.com/RasmusFonseca/ESMT-heuristic).  
+This repository contains code for the BD-heuristic, although the program may also run the DM-heuristic (se the [Usage][Usage] section below). Overview:
 
-The heuristic finds solutions to the Euclidean Steiner Minimal Tree (ESTP) problem. In ESTP, we seek a network of minimal total edge length spanning a set of n terminal points while allowing for the insertion of additional points (Steiner points) to decrease the overall length of the network. 
+* [BD-heuristic code](https://github.com/StephanLorenzen/ESMT-heuristic-using-bottleneck-distances/tree/master/src) - this repository.
+* [Original DM-heuristic code](https://github.com/RasmusFonseca/ESMT-heuristic) - other repository.
 
-In this extended version of the heuristic we explore the possible gains from using a Bottleneck Graph to determine good candidate sub-Steiner trees in the concatenation part of the heuristic. For more info about the extended heuristic, please see: 
+This repository also contains appendices with numerical results and comparisons between the DB- and DM-heuristics. Overview:
 
-* [Steiner Tree Heuristic in the Euclidean d-Space Using Bottleneck Distances]().
+* [BD-heuristic results]() - contains tables with full results achieved by the DB-heuristic and tables with comparisons to the DM-heuristic. Tables 1-10 referred to in the paper [Steiner Tree Heuristic in the Euclidean d-Space Using Bottleneck Distances]() are contained in this appendix.
+* [DM-heuristic results]() - contains tables with full results achieved by the DM-heuristic.
 
 # Compiling
 
@@ -24,6 +32,7 @@ $ make
 The executable depends on having the qdelaunay executable from [qhull](http://www.qhull.org) in the systems PATH. Theres an easy-to-follow explanation [in the wiki](http://github.com/RasmusFonseca/ESMT-heuristic/wiki/qdelaunay) for the original heuristic.
 
 # Usage
+[Usage]:
 
 ```
 Usage: 
