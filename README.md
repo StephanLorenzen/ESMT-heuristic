@@ -22,7 +22,10 @@ This repository also contains appendices with numerical results and comparisons 
 * [DB-heuristic results](https://github.com/StephanLorenzen/ESMT-heuristic-using-bottleneck-distances/blob/master/appendices/DB-heuristic-appendix.pdf) - contains tables with full results achieved by the DB-heuristic and tables with comparisons to the DM-heuristic. The tables referred to in the paper *Steiner Tree Heuristic in the Euclidean d-Space Using Bottleneck Distances* are contained in this appendix.
 * [DM-heuristic results]() - contains tables with full results achieved by the DM-heuristic.
 
-# Compiling
+# DB-heuristic code
+This section describes how to compile and use the DB-heuristic code, found in this repository.
+
+## Compiling
 
 ```
 $ cd src
@@ -31,7 +34,7 @@ $ make
 
 The executable depends on having the qdelaunay executable from [qhull](http://www.qhull.org) in the systems PATH. Theres an easy-to-follow explanation [in the wiki](http://github.com/RasmusFonseca/ESMT-heuristic/wiki/qdelaunay) for the original heuristic.
 
-# Usage
+## Usage
 
 ```
 Usage: 
@@ -62,7 +65,7 @@ Options:
 The important option is -ubd, which enables bottleneck distances. Recommended value is 3.
 Use the -k option to reduce the number of faces considered when using bottleneck distances in higher dimensions.
 
-# Examples
+## Examples
 Solve one of the ESTEIN-3D library instances using bottleneck instances (dyn. tree implementation):
 ```
 $ cd src
