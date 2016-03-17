@@ -12,14 +12,14 @@ It extends the earlier DM-heuristic, which utilizes **D**elaunay triangulation a
 
 * [Euclidean Steiner Tree Heuristic in d-Space](http://dimacs11.cs.princeton.edu/workshop/OlsenLorenzenFonsecaWinter.pdf). A.E. Olsen, S.S. Lorenzen, R. Fonseca and P. Winter.
 
-This repository contains code for the BD-heuristic, although the program may also run the DM-heuristic (se the [Usage][Usage] section below). Overview:
+This repository contains code for the DB-heuristic, although the program may also run the DM-heuristic (se the [Usage][Usage] section below). Overview:
 
-* [BD-heuristic code](https://github.com/StephanLorenzen/ESMT-heuristic-using-bottleneck-distances/tree/master/src) - this repository.
+* [DB-heuristic code](https://github.com/StephanLorenzen/ESMT-heuristic-using-bottleneck-distances/tree/master/src) - this repository.
 * [Original DM-heuristic code](https://github.com/RasmusFonseca/ESMT-heuristic) - other repository.
 
 This repository also contains appendices with numerical results and comparisons between the DB- and DM-heuristics. Overview:
 
-* [BD-heuristic results]() - contains tables with full results achieved by the DB-heuristic and tables with comparisons to the DM-heuristic. Tables 1-10 referred to in the paper [Steiner Tree Heuristic in the Euclidean d-Space Using Bottleneck Distances]() are contained in this appendix.
+* [DB-heuristic results](https://github.com/StephanLorenzen/ESMT-heuristic-using-bottleneck-distances/blob/master/results/computational_results.pdf) - contains tables with full results achieved by the DB-heuristic and tables with comparisons to the DM-heuristic. The tables referred to in the paper [Steiner Tree Heuristic in the Euclidean d-Space Using Bottleneck Distances]() are contained in this appendix.
 * [DM-heuristic results]() - contains tables with full results achieved by the DM-heuristic.
 
 # Compiling
