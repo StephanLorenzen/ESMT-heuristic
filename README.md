@@ -1,4 +1,4 @@
-# The DB-heuristic for the Euclidean Steiner Minimal Tree in any dimension
+# The DB-Heuristic for the Euclidean Steiner Minimal Tree in Any Dimension
 
 ![](esmt-3d.png)
 
